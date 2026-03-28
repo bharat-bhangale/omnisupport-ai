@@ -755,4 +755,55 @@ function mapPriorityToInternal(priority: 'P1' | 'P2' | 'P3' | 'P4'): 'low' | 'no
   return map[priority];
 }
 
+/**
+ * GET /tickets/:id/response-history - Get response history for a ticket
+ */
+router.get(
+  '/:id/response-history',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const ticket = await Ticket.findOne({
+      _id: req.params.id,
+      companyId,
+    })
+      .select('responseHistory')
+      .lean();
+
+    if (!ticket) {
+      throw AppError.notFound('Ticket');
+    }
+
+    // Transform response history for frontend consumption
+    const responses =
+      ticket.responseHistory?.map((entry: {
+        _id?: unknown;
+        sentAt: Date;
+        agentId: string;
+        agentName?: string;
+        responseText: string;
+        agentEdited: boolean;
+        toneApplied?: string;
+      }) => ({
+        id: entry._id?.toString() || String(Date.now()),
+        sentAt: entry.sentAt.toISOString(),
+        agentId: entry.agentId,
+        agentName: entry.agentName || 'Agent',
+        responseText: entry.responseText,
+        agentEdited: entry.agentEdited,
+        toneApplied: entry.toneApplied || 'professional',
+      })) || [];
+
+    childLogger.debug(
+      { ticketId: req.params.id, count: responses.length },
+      'Response history fetched'
+    );
+
+    res.json({ responses });
+  })
+);
+
 export default router;
