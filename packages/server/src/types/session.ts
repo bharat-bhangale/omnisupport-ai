@@ -1,4 +1,5 @@
 import type { SupportedLanguage, SentimentLabel, Channel, EscalationReason } from '../config/constants.js';
+import type { DialogueState } from './dialogue.js';
 
 /**
  * Input for creating a new conversation turn
@@ -55,9 +56,11 @@ export interface CallSessionState {
   language: SupportedLanguage;
   turns: Turn[];
   slots: ConversationSlots;
+  dialogueState: DialogueState;
   startedAt: Date;
   lastActivityAt: Date;
   customerCard?: CustomerIntelligenceCard;
+  proactiveContext?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -80,6 +83,14 @@ export interface CustomerIntelligenceCard {
   recentIssues: RecentIssue[];
   tags?: string[];
   notes?: string;
+  // F3 additions
+  preferredStyle?: 'formal' | 'casual' | 'technical';
+  verbosity?: 'concise' | 'detailed';
+  callSummaries: string[];
+  ticketSummaries: string[];
+  knownIssues: string[];
+  churnRiskScore: number;
+  sentimentTrend: 'improving' | 'stable' | 'worsening';
 }
 
 /**

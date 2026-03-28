@@ -26,6 +26,9 @@ export interface ITicket extends Document {
     approvedBy?: string;
     approvedAt?: Date;
     edits?: string;
+    tone?: 'professional' | 'empathetic' | 'technical';
+    needsReview?: boolean;
+    reviewReason?: string;
   };
   ragContext?: {
     documentIds: string[];
@@ -50,9 +53,18 @@ export interface ITicket extends Document {
     firstResponseAt?: Date;
     isBreached: boolean;
   };
+  responseHistory?: Array<{
+    sentAt: Date;
+    agentId: string;
+    agentName?: string;
+    responseText: string;
+    agentEdited: boolean;
+    toneApplied?: string;
+  }>;
   tags: string[];
   metadata: Record<string, unknown>;
   externalUrl?: string;
+  flaggedForReview?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -121,6 +133,12 @@ const ticketSchema = new Schema<ITicket>(
       approvedBy: String,
       approvedAt: Date,
       edits: String,
+      tone: {
+        type: String,
+        enum: ['professional', 'empathetic', 'technical'],
+      },
+      needsReview: { type: Boolean, default: false },
+      reviewReason: String,
     },
     ragContext: {
       documentIds: [String],
@@ -157,6 +175,23 @@ const ticketSchema = new Schema<ITicket>(
       default: {},
     },
     externalUrl: String,
+    flaggedForReview: {
+      type: Boolean,
+      default: false,
+    },
+    responseHistory: [
+      {
+        sentAt: { type: Date, required: true },
+        agentId: { type: String, required: true },
+        agentName: String,
+        responseText: { type: String, required: true },
+        agentEdited: { type: Boolean, default: false },
+        toneApplied: {
+          type: String,
+          enum: ['professional', 'empathetic', 'technical'],
+        },
+      },
+    ],
   },
   {
     timestamps: true,

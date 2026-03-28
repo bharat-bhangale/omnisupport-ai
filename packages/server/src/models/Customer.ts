@@ -10,8 +10,12 @@ export interface ICustomer extends Document {
   tier: 'standard' | 'premium' | 'vip' | 'enterprise';
   lifetimeValue: number;
   preferredLanguage?: SupportedLanguage;
+  preferredChannel?: 'voice' | 'email' | 'chat';
+  preferredStyle?: 'formal' | 'casual' | 'technical';
+  verbosity?: 'concise' | 'detailed';
   tags: string[];
   notes?: string;
+  knownIssues: string[];
   metadata: Record<string, unknown>;
   integrations: {
     zendesk?: { id: string; url: string };
@@ -20,6 +24,14 @@ export interface ICustomer extends Document {
     hubspot?: { id: string; url: string };
   };
   avgSentiment?: SentimentLabel;
+  sentimentTrend?: 'improving' | 'stable' | 'worsening';
+  sentimentTimeline: Array<{
+    date: Date;
+    score: number;
+    channel: 'voice' | 'email' | 'chat';
+  }>;
+  churnRiskScore: number;
+  openTickets: number;
   totalInteractions: number;
   lastContactAt?: Date;
   createdAt: Date;
@@ -64,12 +76,31 @@ const customerSchema = new Schema<ICustomer>(
     preferredLanguage: {
       type: String,
     },
+    preferredChannel: {
+      type: String,
+      enum: ['voice', 'email', 'chat'],
+      default: 'voice',
+    },
+    preferredStyle: {
+      type: String,
+      enum: ['formal', 'casual', 'technical'],
+      default: 'casual',
+    },
+    verbosity: {
+      type: String,
+      enum: ['concise', 'detailed'],
+      default: 'concise',
+    },
     tags: {
       type: [String],
       default: [],
     },
     notes: {
       type: String,
+    },
+    knownIssues: {
+      type: [String],
+      default: [],
     },
     metadata: {
       type: Schema.Types.Mixed,
@@ -97,6 +128,32 @@ const customerSchema = new Schema<ICustomer>(
       type: String,
       enum: ['positive', 'neutral', 'negative'],
     },
+    sentimentTrend: {
+      type: String,
+      enum: ['improving', 'stable', 'worsening'],
+      default: 'stable',
+    },
+    sentimentTimeline: {
+      type: [
+        {
+          date: { type: Date, required: true },
+          score: { type: Number, required: true, min: 0, max: 1 },
+          channel: { type: String, enum: ['voice', 'email', 'chat'], required: true },
+        },
+      ],
+      default: [],
+    },
+    churnRiskScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 1,
+    },
+    openTickets: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     totalInteractions: {
       type: Number,
       default: 0,
@@ -117,5 +174,9 @@ customerSchema.index({ companyId: 1, email: 1 });
 customerSchema.index({ companyId: 1, externalId: 1 });
 customerSchema.index({ companyId: 1, tier: 1 });
 customerSchema.index({ companyId: 1, lastContactAt: -1 });
+customerSchema.index({ companyId: 1, churnRiskScore: -1 });
+customerSchema.index({ companyId: 1, lifetimeValue: -1 });
+// Text index for search
+customerSchema.index({ name: 'text', email: 'text' });
 
 export const Customer: Model<ICustomer> = mongoose.model<ICustomer>('Customer', customerSchema);
