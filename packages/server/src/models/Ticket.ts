@@ -26,6 +26,9 @@ export interface ITicket extends Document {
     approvedBy?: string;
     approvedAt?: Date;
     edits?: string;
+    tone?: 'professional' | 'empathetic' | 'technical';
+    needsReview?: boolean;
+    reviewReason?: string;
   };
   ragContext?: {
     documentIds: string[];
@@ -53,6 +56,7 @@ export interface ITicket extends Document {
   tags: string[];
   metadata: Record<string, unknown>;
   externalUrl?: string;
+  flaggedForReview?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -121,6 +125,12 @@ const ticketSchema = new Schema<ITicket>(
       approvedBy: String,
       approvedAt: Date,
       edits: String,
+      tone: {
+        type: String,
+        enum: ['professional', 'empathetic', 'technical'],
+      },
+      needsReview: { type: Boolean, default: false },
+      reviewReason: String,
     },
     ragContext: {
       documentIds: [String],
@@ -157,6 +167,10 @@ const ticketSchema = new Schema<ITicket>(
       default: {},
     },
     externalUrl: String,
+    flaggedForReview: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
