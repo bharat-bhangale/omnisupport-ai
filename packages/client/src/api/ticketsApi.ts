@@ -213,6 +213,29 @@ export const ticketsApi = omnisupportApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Ticket' as const, id }],
     }),
+
+    /**
+     * Get response history for a ticket
+     */
+    getResponseHistory: builder.query<
+      {
+        responses: Array<{
+          id: string;
+          sentAt: string;
+          agentId: string;
+          agentName: string;
+          responseText: string;
+          agentEdited: boolean;
+          toneApplied: string;
+        }>;
+      },
+      string
+    >({
+      query: (ticketId) => `/tickets/${ticketId}/response-history`,
+      providesTags: (_result, _error, ticketId) => [
+        { type: 'Ticket' as const, id: `${ticketId}-history` },
+      ],
+    }),
   }),
 });
 
@@ -299,4 +322,5 @@ export const {
   useReassignTicketMutation,
   useCloseTicketMutation,
   useAddTicketNoteMutation,
+  useGetResponseHistoryQuery,
 } = ticketsApi;

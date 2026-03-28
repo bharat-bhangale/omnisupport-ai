@@ -4,26 +4,20 @@ import {
   RefreshCw, 
   Send, 
   X, 
-  ThumbsUp, 
-  ThumbsDown, 
   AlertTriangle,
   BookOpen,
   Loader2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Ticket, DraftTone, KBArticleRef } from '../types/ticket';
-import { useRegenerateDraftMutation, useSendResponseMutation, useSubmitDraftFeedbackMutation } from '../api/ticketsApi';
+import { useRegenerateDraftMutation, useSendResponseMutation } from '../api/ticketsApi';
+import ToneSelector from './ToneSelector';
+import DraftFeedbackRow from './DraftFeedbackRow';
 
 interface AIDraftPanelProps {
   ticket: Ticket;
   onDraftSent?: () => void;
 }
-
-const toneOptions: { value: DraftTone; label: string }[] = [
-  { value: 'professional', label: 'Professional' },
-  { value: 'empathetic', label: 'Empathetic' },
-  { value: 'technical', label: 'Technical' },
-];
 
 function getConfidenceBadge(confidence: number): { bg: string; text: string; label: string } {
   if (confidence >= 0.8) {
@@ -38,11 +32,9 @@ function getConfidenceBadge(confidence: number): { bg: string; text: string; lab
 export function AIDraftPanel({ ticket, onDraftSent }: AIDraftPanelProps): React.ReactElement | null {
   const [editedContent, setEditedContent] = useState<string>(ticket.aiDraft?.content ?? '');
   const [selectedTone, setSelectedTone] = useState<DraftTone>(ticket.aiDraft?.tone ?? 'professional');
-  const [feedbackGiven, setFeedbackGiven] = useState<'up' | 'down' | null>(null);
 
   const [regenerateDraft, { isLoading: isRegenerating }] = useRegenerateDraftMutation();
   const [sendResponse, { isLoading: isSending }] = useSendResponseMutation();
-  const [submitDraftFeedback] = useSubmitDraftFeedbackMutation();
 
   // Sync edited content when ticket draft changes
   useEffect(() => {
@@ -95,19 +87,6 @@ export function AIDraftPanel({ ticket, onDraftSent }: AIDraftPanelProps): React.
     setEditedContent(ticket.aiDraft?.content ?? '');
     toast('Draft discarded');
   }, [ticket.aiDraft?.content]);
-
-  const handleFeedback = useCallback(async (helpful: boolean) => {
-    setFeedbackGiven(helpful ? 'up' : 'down');
-    try {
-      await submitDraftFeedback({
-        id: ticket._id,
-        data: { helpful },
-      }).unwrap();
-      toast.success('Thanks for your feedback!');
-    } catch {
-      toast.error('Failed to submit feedback');
-    }
-  }, [submitDraftFeedback, ticket._id]);
 
   // No draft available
   if (!ticket.aiDraft) {
@@ -172,22 +151,12 @@ export function AIDraftPanel({ ticket, onDraftSent }: AIDraftPanelProps): React.
       <div className="px-4 py-2 border-b border-gray-100">
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500">Tone:</span>
-          <div className="flex gap-1">
-            {toneOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => handleToneChange(option.value)}
-                disabled={isRegenerating}
-                className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                  selectedTone === option.value
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                } ${isRegenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          <ToneSelector
+            selected={selectedTone}
+            onChange={handleToneChange}
+            disabled={isRegenerating}
+            size="sm"
+          />
         </div>
       </div>
 
@@ -242,35 +211,11 @@ export function AIDraftPanel({ ticket, onDraftSent }: AIDraftPanelProps): React.
             Discard
           </button>
         </div>
+      </div>
 
-        {/* Feedback Row */}
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-gray-500 mr-2">Helpful?</span>
-          <button
-            onClick={() => handleFeedback(true)}
-            disabled={feedbackGiven !== null}
-            className={`p-1.5 rounded transition-colors ${
-              feedbackGiven === 'up'
-                ? 'bg-green-100 text-green-600'
-                : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
-            } ${feedbackGiven !== null ? 'cursor-not-allowed' : ''}`}
-            title="Yes, helpful"
-          >
-            <ThumbsUp className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => handleFeedback(false)}
-            disabled={feedbackGiven !== null}
-            className={`p-1.5 rounded transition-colors ${
-              feedbackGiven === 'down'
-                ? 'bg-red-100 text-red-600'
-                : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
-            } ${feedbackGiven !== null ? 'cursor-not-allowed' : ''}`}
-            title="No, not helpful"
-          >
-            <ThumbsDown className="w-4 h-4" />
-          </button>
-        </div>
+      {/* Draft Feedback */}
+      <div className="px-4 pb-3 border-t border-gray-100">
+        <DraftFeedbackRow ticketId={ticket._id} />
       </div>
     </div>
   );

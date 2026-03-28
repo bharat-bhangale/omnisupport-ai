@@ -24,6 +24,7 @@ import { PriorityBadge, PriorityDot } from '../components/PriorityBadge';
 import { SentimentBar, SentimentEmoji } from '../components/SentimentBar';
 import { AIDraftPanel } from '../components/AIDraftPanel';
 import { CustomerContextCard } from '../components/CustomerContextCard';
+import { ResponseHistoryAccordion } from '../components/ResponseHistoryAccordion';
 import type { Ticket, TicketStatus, InternalPriority, TicketSource, TicketListQuery } from '../types/ticket';
 
 // Filter state type
@@ -496,6 +497,9 @@ function TicketDetailPanel({
             Add Note
           </button>
         </div>
+
+        {/* Response History */}
+        <ResponseHistoryAccordion ticketId={ticket._id} />
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-2">

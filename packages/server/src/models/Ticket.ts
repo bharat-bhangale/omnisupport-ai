@@ -53,6 +53,14 @@ export interface ITicket extends Document {
     firstResponseAt?: Date;
     isBreached: boolean;
   };
+  responseHistory?: Array<{
+    sentAt: Date;
+    agentId: string;
+    agentName?: string;
+    responseText: string;
+    agentEdited: boolean;
+    toneApplied?: string;
+  }>;
   tags: string[];
   metadata: Record<string, unknown>;
   externalUrl?: string;
@@ -171,6 +179,19 @@ const ticketSchema = new Schema<ITicket>(
       type: Boolean,
       default: false,
     },
+    responseHistory: [
+      {
+        sentAt: { type: Date, required: true },
+        agentId: { type: String, required: true },
+        agentName: String,
+        responseText: { type: String, required: true },
+        agentEdited: { type: Boolean, default: false },
+        toneApplied: {
+          type: String,
+          enum: ['professional', 'empathetic', 'technical'],
+        },
+      },
+    ],
   },
   {
     timestamps: true,
