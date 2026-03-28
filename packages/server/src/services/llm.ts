@@ -1,5 +1,6 @@
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { CONVERSATION_LIMITS } from '../config/constants.js';
+import { formatCardForVoicePrompt } from './customerIntelligence.js';
 import type {
   CallSessionState,
   SystemPromptParams,
@@ -115,7 +116,7 @@ Use contractions and casual phrasing when appropriate.`);
   // Customer context section
   if (customerCard) {
     sections.push(`[CUSTOMER CONTEXT]
-${formatCustomerCard(customerCard)}`);
+${formatCardForVoicePrompt(customerCard)}`);
   }
 
   // Behavior section
@@ -142,48 +143,6 @@ ${customInstructions}`);
   }
 
   return sections.join('\n\n');
-}
-
-/**
- * Format customer card for inclusion in system prompt
- */
-function formatCustomerCard(card: CustomerIntelligenceCard): string {
-  const lines: string[] = [];
-
-  if (card.name) {
-    lines.push(`Customer: ${card.name}`);
-  }
-  if (card.tier && card.tier !== 'standard') {
-    lines.push(`Tier: ${card.tier.toUpperCase()}`);
-  }
-  if (card.lifetimeValue && card.lifetimeValue > 0) {
-    lines.push(`Lifetime Value: $${card.lifetimeValue.toLocaleString()}`);
-  }
-  if (card.totalInteractions > 0) {
-    lines.push(`Previous Interactions: ${card.totalInteractions}`);
-  }
-  if (card.avgSentiment) {
-    lines.push(`Historical Sentiment: ${card.avgSentiment}`);
-  }
-  if (card.openTickets > 0) {
-    lines.push(`Open Tickets: ${card.openTickets}`);
-  }
-
-  // Recent issues
-  if (card.recentIssues.length > 0) {
-    lines.push('Recent Issues:');
-    for (const issue of card.recentIssues.slice(0, 3)) {
-      const date = new Date(issue.createdAt).toLocaleDateString();
-      lines.push(`  - ${issue.subject} (${issue.status}, ${date})`);
-    }
-  }
-
-  // Notes
-  if (card.notes) {
-    lines.push(`Notes: ${card.notes}`);
-  }
-
-  return lines.join('\n');
 }
 
 /**
