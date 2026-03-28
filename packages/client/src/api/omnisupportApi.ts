@@ -29,6 +29,7 @@ export const omnisupportApi = createApi({
     'KnowledgeBase',
     'Workflow',
     'SLA',
+    'AgentConfig',
   ],
   endpoints: () => ({}),
 });
