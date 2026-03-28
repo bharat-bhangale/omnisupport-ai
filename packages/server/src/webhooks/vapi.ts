@@ -3,16 +3,34 @@ import crypto from 'crypto';
 import { z } from 'zod';
 import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
-import { initSession, appendTurn, flushToMongoDB, getSession } from '../services/contextMemory.js';
+import {
+  initSession,
+  appendTurn,
+  flushToMongoDB,
+  getSession,
+  updateSlots,
+  updateDialogueState,
+  updateProactiveContext,
+} from '../services/contextMemory.js';
 import { buildCustomerCard } from '../services/customerIntelligence.js';
 import { buildSystemPrompt } from '../services/llm.js';
+import {
+  classifyIntent,
+  extractSlots,
+  checkSlots,
+  needsConfirmation,
+  isConfirmationResponse,
+} from '../services/dialogueFSM.js';
+import { getToolForIntent } from '../config/intentSlots.js';
 import { sentimentQueue } from '../queues/index.js';
 import { AppError } from '../middleware/AppError.js';
+import { createDefaultDialogueState } from '../types/dialogue.js';
+import type { SupportedIntent, DialogueState } from '../types/dialogue.js';
 import type {
-  VapiWebhookPayload,
   VapiTranscriptPayload,
   VapiEndOfCallReportPayload,
   SupportedLanguage,
+  ConversationSlots,
 } from '../types/session.js';
 
 const childLogger = logger.child({ webhook: 'vapi' });
@@ -162,15 +180,15 @@ async function handleCallStarted(
 }
 
 /**
- * Handle transcript event
+ * Handle transcript event with FSM integration
  */
 async function handleTranscript(
   payload: VapiTranscriptPayload,
   companyId: string
-): Promise<void> {
+): Promise<{ proactiveContext?: string; toolCall?: { name: string; args: Record<string, unknown> } }> {
   // Only process final transcripts
   if (!payload.isFinal) {
-    return;
+    return {};
   }
 
   const { call, transcript, role } = payload;
@@ -194,13 +212,197 @@ async function handleTranscript(
         callId: call.id,
         companyId,
         text: transcript,
-        turnIndex: -1, // Will be determined by worker
+        turnIndex: -1,
       },
       {
         jobId: `sentiment-${call.id}-${Date.now()}`,
       }
     );
   }
+
+  // Only process FSM for user utterances
+  if (role !== 'user') {
+    return {};
+  }
+
+  // Get current session
+  const session = await getSession(call.id, companyId);
+  if (!session) {
+    childLogger.warn({ callId: call.id }, 'Session not found for FSM processing');
+    return {};
+  }
+
+  const dialogueState = session.dialogueState || createDefaultDialogueState();
+  let proactiveContext: string | undefined;
+  let toolCall: { name: string; args: Record<string, unknown> } | undefined;
+
+  // If awaiting confirmation, check the response first
+  if (dialogueState.confirmation.awaitingConfirmation) {
+    const confirmResponse = await isConfirmationResponse(transcript);
+
+    if (confirmResponse === 'yes') {
+      // Execute the pending action
+      if (dialogueState.pendingTool) {
+        toolCall = {
+          name: dialogueState.pendingTool,
+          args: dialogueState.pendingToolArgs || {},
+        };
+      }
+
+      await updateDialogueState(call.id, companyId, {
+        confirmation: {
+          awaitingConfirmation: false,
+          pendingIntent: null,
+          pendingSlots: null,
+          confirmationMessage: null,
+          clarificationAttempts: 0,
+        },
+        pendingToolExecution: true,
+        pendingTool: null,
+        pendingToolArgs: null,
+      });
+
+      childLogger.info({ callId: call.id, tool: toolCall?.name }, 'Confirmation received, executing tool');
+      return { toolCall };
+    }
+
+    if (confirmResponse === 'no') {
+      proactiveContext = 'The customer said no to the previous confirmation. Ask what they would like to change.';
+
+      await updateDialogueState(call.id, companyId, {
+        confirmation: {
+          ...dialogueState.confirmation,
+          awaitingConfirmation: false,
+          clarificationAttempts: 0,
+        },
+      });
+
+      await updateProactiveContext(call.id, companyId, proactiveContext);
+      return { proactiveContext };
+    }
+
+    // Unclear response
+    const attempts = dialogueState.confirmation.clarificationAttempts + 1;
+    if (attempts >= 3) {
+      // Auto-escalate after too many unclear responses
+      proactiveContext = "I'm having trouble understanding. Offer to connect the customer with a human agent.";
+      toolCall = { name: 'escalateToHuman', args: { reason: 'unclear_responses' } };
+
+      await updateDialogueState(call.id, companyId, {
+        currentIntent: 'escalate_to_human',
+        confirmation: {
+          awaitingConfirmation: false,
+          pendingIntent: null,
+          pendingSlots: null,
+          confirmationMessage: null,
+          clarificationAttempts: 0,
+        },
+      });
+
+      return { proactiveContext, toolCall };
+    }
+
+    // Ask for clarification again
+    proactiveContext = `Ask the customer to confirm with yes or no: ${dialogueState.confirmation.confirmationMessage}`;
+
+    await updateDialogueState(call.id, companyId, {
+      confirmation: {
+        ...dialogueState.confirmation,
+        clarificationAttempts: attempts,
+      },
+    });
+
+    await updateProactiveContext(call.id, companyId, proactiveContext);
+    return { proactiveContext };
+  }
+
+  // Classify intent if not set or stale
+  let intent = dialogueState.currentIntent;
+  if (!intent || dialogueState.turnsSinceIntent > 5) {
+    const classification = await classifyIntent(transcript);
+    if (classification.confidence > 0.6) {
+      intent = classification.intent;
+      childLogger.debug({ callId: call.id, intent, confidence: classification.confidence }, 'Intent classified');
+    }
+  }
+
+  if (!intent) {
+    intent = 'general_inquiry';
+  }
+
+  // Extract slots for the intent
+  const extraction = await extractSlots(intent, transcript, session.slots);
+  const newSlots = extraction.slots as ConversationSlots;
+
+  // Update slots in session
+  await updateSlots(call.id, companyId, newSlots);
+
+  // Check slot completeness
+  const slotCheck = checkSlots(intent, newSlots);
+
+  if (!slotCheck.complete) {
+    // Ask for missing slot
+    proactiveContext = `Ask the customer: ${slotCheck.nextQuestion}`;
+
+    await updateDialogueState(call.id, companyId, {
+      currentIntent: intent,
+      turnsSinceIntent: dialogueState.turnsSinceIntent + 1,
+    });
+
+    await updateProactiveContext(call.id, companyId, proactiveContext);
+
+    childLogger.debug(
+      { callId: call.id, intent, missingSlot: slotCheck.missingSlot },
+      'Requesting missing slot'
+    );
+
+    return { proactiveContext };
+  }
+
+  // Slots complete - check if confirmation needed
+  const confirmMessage = needsConfirmation(intent, newSlots);
+  if (confirmMessage) {
+    proactiveContext = `Confirm with the customer: ${confirmMessage}`;
+
+    const toolName = getToolForIntent(intent);
+
+    await updateDialogueState(call.id, companyId, {
+      currentIntent: intent,
+      confirmation: {
+        awaitingConfirmation: true,
+        pendingIntent: intent,
+        pendingSlots: newSlots,
+        confirmationMessage: confirmMessage,
+        clarificationAttempts: 0,
+      },
+      pendingTool: toolName,
+      pendingToolArgs: newSlots as Record<string, unknown>,
+    });
+
+    await updateProactiveContext(call.id, companyId, proactiveContext);
+
+    childLogger.debug({ callId: call.id, intent }, 'Awaiting confirmation');
+
+    return { proactiveContext };
+  }
+
+  // No confirmation needed - execute immediately
+  const toolName = getToolForIntent(intent);
+  if (toolName) {
+    toolCall = { name: toolName, args: newSlots as Record<string, unknown> };
+
+    await updateDialogueState(call.id, companyId, {
+      currentIntent: intent,
+      pendingToolExecution: true,
+    });
+
+    childLogger.info({ callId: call.id, intent, tool: toolName }, 'Executing tool');
+  }
+
+  // Clear proactive context
+  await updateProactiveContext(call.id, companyId, undefined);
+
+  return { toolCall };
 }
 
 /**
@@ -292,10 +494,19 @@ export async function vapiWebhookHandler(req: Request, res: Response): Promise<v
           res.status(200).json({ received: true });
           return;
         }
-        // Fire and forget - don't wait for completion
-        handleTranscript(transcriptResult.data, companyId).catch((err) => {
-          childLogger.error({ err, callId: call.id }, 'Error handling transcript');
-        });
+        // Process FSM and get any proactive context or tool calls
+        handleTranscript(transcriptResult.data, companyId)
+          .then((result) => {
+            if (result.toolCall) {
+              childLogger.debug(
+                { callId: call.id, tool: result.toolCall.name },
+                'Tool call triggered by FSM'
+              );
+            }
+          })
+          .catch((err) => {
+            childLogger.error({ err, callId: call.id }, 'Error handling transcript');
+          });
         res.status(200).json({ received: true });
         break;
       }
