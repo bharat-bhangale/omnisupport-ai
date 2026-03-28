@@ -4,6 +4,8 @@ import { logger } from '../config/logger.js';
 import { CallSession } from '../models/CallSession.js';
 import { summaryQueue } from '../queues/index.js';
 import { AppError } from '../middleware/AppError.js';
+import { createDefaultDialogueState } from '../types/dialogue.js';
+import type { DialogueState } from '../types/dialogue.js';
 import type {
   CallSessionState,
   TurnInput,
@@ -39,6 +41,7 @@ export async function initSession(params: InitSessionParams): Promise<CallSessio
     language,
     turns: [],
     slots: {},
+    dialogueState: createDefaultDialogueState(),
     startedAt: now,
     lastActivityAt: now,
     metadata,
@@ -154,6 +157,70 @@ export async function updateCustomerCard(
   await redis.setex(sessionKey, REDIS_TTL.LIVE_CALL_SESSION, JSON.stringify(session));
 
   childLogger.debug({ callId, companyId }, 'Customer card updated');
+
+  return session;
+}
+
+/**
+ * Update dialogue FSM state in the session
+ */
+export async function updateDialogueState(
+  callId: string,
+  companyId: string,
+  updates: Partial<DialogueState>
+): Promise<CallSessionState> {
+  const sessionKey = buildRedisKey(companyId, REDIS_KEYS.SESSION, callId);
+  const data = await redis.get(sessionKey);
+
+  if (!data) {
+    throw AppError.notFound('Session');
+  }
+
+  const session = JSON.parse(data) as CallSessionState;
+
+  // Deep merge dialogue state
+  session.dialogueState = {
+    ...session.dialogueState,
+    ...updates,
+    confirmation: {
+      ...session.dialogueState.confirmation,
+      ...(updates.confirmation || {}),
+    },
+  };
+  session.lastActivityAt = new Date();
+
+  await redis.setex(sessionKey, REDIS_TTL.LIVE_CALL_SESSION, JSON.stringify(session));
+
+  childLogger.debug(
+    { callId, companyId, currentIntent: session.dialogueState.currentIntent },
+    'Dialogue state updated'
+  );
+
+  return session;
+}
+
+/**
+ * Update proactive context message for next turn
+ */
+export async function updateProactiveContext(
+  callId: string,
+  companyId: string,
+  proactiveContext: string | undefined
+): Promise<CallSessionState> {
+  const sessionKey = buildRedisKey(companyId, REDIS_KEYS.SESSION, callId);
+  const data = await redis.get(sessionKey);
+
+  if (!data) {
+    throw AppError.notFound('Session');
+  }
+
+  const session = JSON.parse(data) as CallSessionState;
+  session.proactiveContext = proactiveContext;
+  session.lastActivityAt = new Date();
+
+  await redis.setex(sessionKey, REDIS_TTL.LIVE_CALL_SESSION, JSON.stringify(session));
+
+  childLogger.debug({ callId, companyId, hasContext: !!proactiveContext }, 'Proactive context updated');
 
   return session;
 }
