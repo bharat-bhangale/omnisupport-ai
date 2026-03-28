@@ -25,6 +25,11 @@ export interface ICustomer extends Document {
   };
   avgSentiment?: SentimentLabel;
   sentimentTrend?: 'improving' | 'stable' | 'worsening';
+  sentimentTimeline: Array<{
+    date: Date;
+    score: number;
+    channel: 'voice' | 'email' | 'chat';
+  }>;
   churnRiskScore: number;
   openTickets: number;
   totalInteractions: number;
@@ -127,6 +132,16 @@ const customerSchema = new Schema<ICustomer>(
       type: String,
       enum: ['improving', 'stable', 'worsening'],
       default: 'stable',
+    },
+    sentimentTimeline: {
+      type: [
+        {
+          date: { type: Date, required: true },
+          score: { type: Number, required: true, min: 0, max: 1 },
+          channel: { type: String, enum: ['voice', 'email', 'chat'], required: true },
+        },
+      ],
+      default: [],
     },
     churnRiskScore: {
       type: Number,
