@@ -27,6 +27,7 @@ export const omnisupportApi = createApi({
     'Calls',
     'Analytics',
     'KnowledgeBase',
+    'Workflow',
   ],
   endpoints: () => ({}),
 });
