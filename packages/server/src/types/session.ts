@@ -83,6 +83,14 @@ export interface CustomerIntelligenceCard {
   recentIssues: RecentIssue[];
   tags?: string[];
   notes?: string;
+  // F3 additions
+  preferredStyle?: 'formal' | 'casual' | 'technical';
+  verbosity?: 'concise' | 'detailed';
+  callSummaries: string[];
+  ticketSummaries: string[];
+  knownIssues: string[];
+  churnRiskScore: number;
+  sentimentTrend: 'improving' | 'stable' | 'worsening';
 }
 
 /**
