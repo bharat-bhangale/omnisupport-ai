@@ -19,6 +19,7 @@ import analyticsRouter from './routes/analytics.js';
 import learningRouter from './routes/learning.js';
 import onboardingRouter from './routes/onboarding.js';
 import proactiveTriggersRouter from './routes/proactiveTriggers.js';
+import fraudRouter from './routes/fraud.js';
 import { initializeSockets, cleanupSockets } from './sockets/index.js';
 
 // Extend Express Request type for requestId
@@ -108,6 +109,7 @@ async function bootstrap(): Promise<void> {
   app.use('/api/learning', learningRouter);
   app.use('/api/onboarding', onboardingRouter);
   app.use('/api/proactive-triggers', proactiveTriggersRouter);
+  app.use('/api/fraud', fraudRouter);
 
   // Debug endpoint (protected in production)
   if (env.NODE_ENV === 'development') {
