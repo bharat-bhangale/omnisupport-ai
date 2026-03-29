@@ -11,6 +11,7 @@ import escalationsRouter from './routes/escalations.js';
 import integrationsRouter from './routes/integrations.js';
 import qaRouter from './routes/qa.js';
 import analyticsRouter from './routes/analytics.js';
+import learningRouter from './routes/learning.js';
 import { initializeSockets, cleanupSockets } from './sockets/index.js';
 
 async function bootstrap(): Promise<void> {
@@ -34,6 +35,7 @@ async function bootstrap(): Promise<void> {
   app.use('/api/integrations', integrationsRouter);
   app.use('/api/qa', qaRouter);
   app.use('/api/analytics', analyticsRouter);
+  app.use('/api/learning', learningRouter);
 
   // Debug endpoint (would need auth in production)
   app.get('/debug/sessions/:callId', getCallSessionState);
