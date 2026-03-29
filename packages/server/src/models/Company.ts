@@ -225,6 +225,58 @@ const companySchema = new Schema<ICompany>(
         default: true,
       },
     },
+    billing: {
+      stripeCustomerId: String,
+      stripeSubscriptionId: String,
+      plan: {
+        type: String,
+        enum: ['starter', 'growth', 'enterprise'],
+        default: 'starter',
+      },
+      status: {
+        type: String,
+        enum: ['active', 'past_due', 'canceled', 'trialing'],
+        default: 'active',
+      },
+      currentPeriodEnd: Date,
+      cancelAtPeriodEnd: {
+        type: Boolean,
+        default: false,
+      },
+    },
+    security: {
+      twoFactorRequired: {
+        type: Boolean,
+        default: false,
+      },
+      sessionTimeoutMinutes: {
+        type: Number,
+        default: 480, // 8 hours
+      },
+      dataRetentionDays: {
+        type: Number,
+        default: 90,
+      },
+      ipWhitelist: {
+        type: [String],
+        default: [],
+      },
+    },
+    apiKeys: {
+      publicKey: String,
+      secretKeyHash: String,
+      webhookSecret: String,
+      lastRotatedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+    industry: String,
+    primaryLanguage: {
+      type: String,
+      default: 'en',
+    },
+    logoUrl: String,
     active: {
       type: Boolean,
       default: true,
@@ -239,5 +291,6 @@ const companySchema = new Schema<ICompany>(
 companySchema.index({ slug: 1 }, { unique: true });
 companySchema.index({ active: 1 });
 companySchema.index({ tier: 1 });
+companySchema.index({ 'billing.stripeCustomerId': 1 });
 
 export const Company: Model<ICompany> = mongoose.model<ICompany>('Company', companySchema);
