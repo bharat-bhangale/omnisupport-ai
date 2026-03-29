@@ -22,6 +22,7 @@ export interface ActiveCallData {
   status: string;
   turnCount: number;
   startedAt: string;
+  hasProactiveContext?: boolean;
 }
 
 interface LiveCallCardProps {
@@ -128,6 +129,15 @@ export default function LiveCallCard({ call, onViewTranscript, onEscalate }: Liv
             <Phone className="h-4 w-4 text-teal-600" />
           </div>
           <span className="font-mono text-sm text-gray-700">{call.callerPhone}</span>
+          {/* PRO Badge for Proactive Context */}
+          {call.hasProactiveContext && (
+            <span
+              className="inline-flex items-center px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded cursor-help"
+              title="Proactive suggestions active — AI is anticipating follow-ups"
+            >
+              PRO
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <span className="text-lg">{flag}</span>
