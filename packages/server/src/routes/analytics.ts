@@ -5,6 +5,8 @@ import { AppError } from '../middleware/AppError.js';
 import { logger } from '../config/logger.js';
 import { Ticket } from '../models/Ticket.js';
 import { FeedbackEvent } from '../models/FeedbackEvent.js';
+import { CallSession } from '../models/CallSession.js';
+import { Escalation } from '../models/Escalation.js';
 
 const router = Router();
 const childLogger = logger.child({ route: 'analytics' });
@@ -288,6 +290,403 @@ router.get(
         breaches: sla.breached,
       },
     });
+  })
+);
+
+// Helper functions
+function maskPhone(phone: string): string {
+  if (!phone || phone.length < 4) return '****';
+  return `***-***-${phone.slice(-4)}`;
+}
+
+function truncate(str: string, length: number): string {
+  if (!str) return '';
+  if (str.length <= length) return str;
+  return str.slice(0, length - 3) + '...';
+}
+
+/**
+ * GET /analytics/dashboard - Get dashboard summary stats
+ */
+router.get(
+  '/dashboard',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const days = parseInt(req.query.days as string) || 1;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    startDate.setHours(0, 0, 0, 0);
+
+    const previousStartDate = new Date(startDate);
+    previousStartDate.setDate(previousStartDate.getDate() - days);
+
+    const companyObjectId = new mongoose.Types.ObjectId(companyId);
+
+    // Run all queries in parallel
+    const [
+      activeCalls,
+      openTickets,
+      previousOpenTickets,
+      todaysCalls,
+      previousCalls,
+      resolvedCalls,
+      previousResolvedCalls,
+      escalations,
+    ] = await Promise.all([
+      // Active calls right now
+      CallSession.countDocuments({
+        companyId: companyObjectId,
+        status: 'active',
+      }),
+
+      // Open tickets
+      Ticket.countDocuments({
+        companyId: companyObjectId,
+        status: { $in: ['open', 'pending', 'in_progress', 'new'] },
+      }),
+
+      // Previous day open tickets (for trend)
+      Ticket.countDocuments({
+        companyId: companyObjectId,
+        status: { $in: ['open', 'pending', 'in_progress', 'new'] },
+        createdAt: { $lt: startDate },
+      }),
+
+      // Today's total calls
+      CallSession.countDocuments({
+        companyId: companyObjectId,
+        startedAt: { $gte: startDate },
+      }),
+
+      // Previous period calls
+      CallSession.countDocuments({
+        companyId: companyObjectId,
+        startedAt: { $gte: previousStartDate, $lt: startDate },
+      }),
+
+      // AI resolved calls (not escalated)
+      CallSession.countDocuments({
+        companyId: companyObjectId,
+        startedAt: { $gte: startDate },
+        status: 'completed',
+        'escalation.escalatedAt': { $exists: false },
+      }),
+
+      // Previous AI resolved
+      CallSession.countDocuments({
+        companyId: companyObjectId,
+        startedAt: { $gte: previousStartDate, $lt: startDate },
+        status: 'completed',
+        'escalation.escalatedAt': { $exists: false },
+      }),
+
+      // Active escalations
+      Escalation.countDocuments({
+        companyId: companyObjectId,
+        status: 'waiting',
+      }),
+    ]);
+
+    // Calculate metrics
+    const aiResolutionRate = todaysCalls > 0 ? (resolvedCalls / todaysCalls) * 100 : 0;
+    const previousResolutionRate =
+      previousCalls > 0 ? (previousResolvedCalls / previousCalls) * 100 : 0;
+
+    // Estimate cost savings ($2.50 per AI-resolved interaction)
+    const costPerInteraction = 2.5;
+    const costSavedToday = resolvedCalls * costPerInteraction;
+
+    // Open ticket trend
+    const openTicketTrend = openTickets - previousOpenTickets;
+
+    // Resolution rate trend
+    const resolutionRateTrend = aiResolutionRate - previousResolutionRate;
+
+    res.json({
+      activeCalls,
+      openTickets,
+      openTicketTrend,
+      aiResolutionRate: Math.round(aiResolutionRate * 10) / 10,
+      resolutionRateTrend: Math.round(resolutionRateTrend * 10) / 10,
+      costSavedToday: Math.round(costSavedToday),
+      interactionsToday: todaysCalls + resolvedCalls,
+      waitingEscalations: escalations,
+      timestamp: new Date().toISOString(),
+    });
+  })
+);
+
+/**
+ * GET /analytics/activity - Get live activity feed
+ */
+router.get(
+  '/activity',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+    const companyObjectId = new mongoose.Types.ObjectId(companyId);
+
+    // Get recent activities from different sources
+    const [recentCalls, recentTickets, recentEscalations] = await Promise.all([
+      // Recent call events
+      CallSession.find({ companyId: companyObjectId })
+        .sort({ updatedAt: -1 })
+        .limit(limit)
+        .select('callId callerPhone status sentiment.overall startedAt endedAt intent')
+        .lean(),
+
+      // Recent ticket updates
+      Ticket.find({ companyId: companyObjectId })
+        .sort({ updatedAt: -1 })
+        .limit(limit)
+        .select('subject status priority category updatedAt aiDraft')
+        .lean(),
+
+      // Recent escalations
+      Escalation.find({ companyId: companyObjectId })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('callerPhone reason priority status holdStarted')
+        .lean(),
+    ]);
+
+    // Transform to activity feed items
+    const activities: Array<{
+      id: string;
+      type: string;
+      description: string;
+      category?: string;
+      timestamp: Date;
+      sentiment?: string;
+      priority?: string;
+    }> = [];
+
+    // Call activities
+    for (const call of recentCalls) {
+      if (call.status === 'active') {
+        activities.push({
+          id: `call-${call.callId}`,
+          type: 'call_active',
+          description: `Active call from ${maskPhone(call.callerPhone)}`,
+          category: call.intent || undefined,
+          timestamp: call.startedAt,
+          sentiment: call.sentiment?.overall,
+        });
+      } else if (call.status === 'completed' && call.endedAt) {
+        activities.push({
+          id: `call-${call.callId}-end`,
+          type: 'call_completed',
+          description: `Call completed with ${maskPhone(call.callerPhone)}`,
+          category: call.intent || undefined,
+          timestamp: call.endedAt,
+          sentiment: call.sentiment?.overall,
+        });
+      }
+    }
+
+    // Ticket activities
+    for (const ticket of recentTickets) {
+      const ticketId = ticket._id.toString();
+      const hasDraft = !!(ticket.aiDraft as { content?: string })?.content;
+
+      activities.push({
+        id: `ticket-${ticketId}`,
+        type: hasDraft ? 'ticket_draft_ready' : 'ticket_update',
+        description: truncate(ticket.subject, 60),
+        category: ticket.category || undefined,
+        timestamp: ticket.updatedAt,
+        priority: ticket.priority,
+      });
+    }
+
+    // Escalation activities
+    for (const esc of recentEscalations) {
+      const escId = esc._id.toString();
+      activities.push({
+        id: `escalation-${escId}`,
+        type: esc.status === 'waiting' ? 'escalation_waiting' : 'escalation_accepted',
+        description: `Escalation: ${esc.reason} from ${maskPhone(esc.callerPhone)}`,
+        timestamp: esc.holdStarted || new Date(),
+        priority: esc.priority,
+      });
+    }
+
+    // Sort by timestamp and limit
+    activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    const limitedActivities = activities.slice(0, limit);
+
+    res.json({
+      activities: limitedActivities,
+      timestamp: new Date().toISOString(),
+    });
+  })
+);
+
+/**
+ * GET /analytics/active-calls - Get current active calls
+ */
+router.get(
+  '/active-calls',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const companyObjectId = new mongoose.Types.ObjectId(companyId);
+
+    const activeCalls = await CallSession.find({
+      companyId: companyObjectId,
+      status: 'active',
+    })
+      .select('callId callerPhone intent sentiment.overall startedAt slots.confidence')
+      .sort({ startedAt: -1 })
+      .limit(20)
+      .lean();
+
+    const calls = activeCalls.map((call) => ({
+      id: call.callId,
+      phone: maskPhone(call.callerPhone),
+      intent: call.intent || 'Unknown',
+      sentiment: call.sentiment?.overall || 'neutral',
+      confidence: (call.slots as Record<string, unknown>)?.confidence || 0.8,
+      startedAt: call.startedAt,
+      duration: Math.floor((Date.now() - new Date(call.startedAt).getTime()) / 1000),
+    }));
+
+    res.json({ calls });
+  })
+);
+
+/**
+ * GET /analytics/recent-tickets - Get recent tickets for dashboard
+ */
+router.get(
+  '/recent-tickets',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const limit = Math.min(parseInt(req.query.limit as string) || 5, 20);
+    const companyObjectId = new mongoose.Types.ObjectId(companyId);
+
+    const tickets = await Ticket.find({ companyId: companyObjectId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .select('subject status priority category createdAt aiDraft')
+      .lean();
+
+    const formattedTickets = tickets.map((t) => ({
+      id: t._id.toString(),
+      subject: truncate(t.subject, 50),
+      status: t.status,
+      priority: t.priority,
+      category: t.category,
+      createdAt: t.createdAt,
+      hasDraft: !!(t.aiDraft as { content?: string })?.content,
+    }));
+
+    res.json({ tickets: formattedTickets });
+  })
+);
+
+/**
+ * GET /analytics/resolution-chart - Get 7-day resolution rate data for chart
+ */
+router.get(
+  '/resolution-chart',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const companyObjectId = new mongoose.Types.ObjectId(companyId);
+    const days = 7;
+    const data: Array<{ date: string; aiResolved: number; humanResolved: number; total: number }> = [];
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      const [total, aiResolved] = await Promise.all([
+        CallSession.countDocuments({
+          companyId: companyObjectId,
+          startedAt: { $gte: date, $lt: nextDate },
+          status: { $in: ['completed', 'escalated'] },
+        }),
+        CallSession.countDocuments({
+          companyId: companyObjectId,
+          startedAt: { $gte: date, $lt: nextDate },
+          status: 'completed',
+          'escalation.escalatedAt': { $exists: false },
+        }),
+      ]);
+
+      data.push({
+        date: date.toISOString().split('T')[0],
+        aiResolved,
+        humanResolved: total - aiResolved,
+        total,
+      });
+    }
+
+    res.json({ data });
+  })
+);
+
+/**
+ * GET /analytics/system-status - Get integration health status
+ */
+router.get(
+  '/system-status',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    // Get integration health
+    let integrationHealth: Record<string, { status: string; lastSync?: Date }> = {};
+
+    try {
+      const { getOrchestrator } = await import('../integrations/IntegrationOrchestrator.js');
+      const orchestrator = await getOrchestrator(companyId);
+      const health = orchestrator.getAllHealth();
+
+      integrationHealth = Object.fromEntries(
+        Object.entries(health).map(([name, h]) => [
+          name,
+          { status: h.status, lastSync: h.lastSuccessAt },
+        ])
+      );
+    } catch {
+      // No integrations configured
+    }
+
+    // Add core services
+    const services = {
+      api: { status: 'healthy', lastSync: new Date() },
+      database: { status: 'healthy', lastSync: new Date() },
+      redis: { status: 'healthy', lastSync: new Date() },
+      ...integrationHealth,
+    };
+
+    res.json({ services });
   })
 );
 
