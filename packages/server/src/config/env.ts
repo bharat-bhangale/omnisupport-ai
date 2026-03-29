@@ -5,6 +5,9 @@ const envSchema = z.object({
   PORT: z.string().transform(Number).default('3000'),
   SERVER_URL: z.string().url(),
 
+  // CORS
+  CORS_ORIGIN: z.string().default('http://localhost:5173'),
+
   // MongoDB
   MONGODB_URI: z.string().min(1),
 
@@ -14,6 +17,7 @@ const envSchema = z.object({
 
   // Auth0
   AUTH0_DOMAIN: z.string().min(1),
+  AUTH0_AUDIENCE: z.string().min(1),
   AUTH0_CLIENT_ID: z.string().min(1),
   AUTH0_CLIENT_SECRET: z.string().min(1),
   AUTH0_MGMT_API_TOKEN: z.string().optional(),
@@ -33,6 +37,7 @@ const envSchema = z.object({
   // Vapi
   VAPI_API_KEY: z.string().min(1),
   VAPI_WEBHOOK_SECRET: z.string().min(1),
+  VAPI_WEBHOOK_URL: z.string().url().optional(),
 
   // ElevenLabs
   ELEVENLABS_API_KEY: z.string().min(1),

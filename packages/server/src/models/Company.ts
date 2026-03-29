@@ -12,6 +12,21 @@ export interface VoiceConfig {
 export interface TextConfig {
   classificationCategories: string[];
   brandVoice: string;
+  supportedLanguages: string[];
+  autoDetect: boolean;
+}
+
+export interface QARubricDimension {
+  minPassScore: number;
+  weight: number;
+}
+
+export interface QARubric {
+  intentUnderstanding: QARubricDimension;
+  responseAccuracy: QARubricDimension;
+  resolutionSuccess: QARubricDimension;
+  escalationCorrectness: QARubricDimension;
+  customerExperience: QARubricDimension;
 }
 
 export interface ICompany extends Document {
@@ -30,6 +45,20 @@ export interface ICompany extends Document {
     freshdesk?: {
       domain: string;
       apiKeyEncrypted: string;
+    };
+    salesforce?: {
+      instanceUrl: string;
+      clientId: string;
+      clientSecretEncrypted: string;
+      accessTokenEncrypted?: string;
+      refreshTokenEncrypted?: string;
+    };
+    hubspot?: {
+      apiKeyEncrypted: string;
+    };
+    slack?: {
+      webhookUrl: string;
+      channel?: string;
     };
     twilio?: {
       phoneNumber: string;
@@ -59,6 +88,7 @@ export interface ICompany extends Document {
     escalationEmail?: string;
     slaEnabled: boolean;
   };
+  qaRubric?: QARubric;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -117,6 +147,14 @@ const textConfigSchema = new Schema<TextConfig>(
       type: String,
       default: 'Professional, friendly, and helpful. Use clear language and be empathetic to customer concerns.',
     },
+    supportedLanguages: {
+      type: [String],
+      default: ['en'],
+    },
+    autoDetect: {
+      type: Boolean,
+      default: true,
+    },
   },
   { _id: false }
 );
@@ -161,6 +199,20 @@ const companySchema = new Schema<ICompany>(
       freshdesk: {
         domain: String,
         apiKeyEncrypted: String,
+      },
+      salesforce: {
+        instanceUrl: String,
+        clientId: String,
+        clientSecretEncrypted: String,
+        accessTokenEncrypted: String,
+        refreshTokenEncrypted: String,
+      },
+      hubspot: {
+        apiKeyEncrypted: String,
+      },
+      slack: {
+        webhookUrl: String,
+        channel: String,
       },
       twilio: {
         phoneNumber: String,
@@ -225,6 +277,80 @@ const companySchema = new Schema<ICompany>(
         default: true,
       },
     },
+    qaRubric: {
+      intentUnderstanding: {
+        minPassScore: { type: Number, default: 6 },
+        weight: { type: Number, default: 0.20 },
+      },
+      responseAccuracy: {
+        minPassScore: { type: Number, default: 7 },
+        weight: { type: Number, default: 0.25 },
+      },
+      resolutionSuccess: {
+        minPassScore: { type: Number, default: 6 },
+        weight: { type: Number, default: 0.25 },
+      },
+      escalationCorrectness: {
+        minPassScore: { type: Number, default: 7 },
+        weight: { type: Number, default: 0.15 },
+      },
+      customerExperience: {
+        minPassScore: { type: Number, default: 6 },
+        weight: { type: Number, default: 0.15 },
+      },
+    },
+    billing: {
+      stripeCustomerId: String,
+      stripeSubscriptionId: String,
+      plan: {
+        type: String,
+        enum: ['starter', 'growth', 'enterprise'],
+        default: 'starter',
+      },
+      status: {
+        type: String,
+        enum: ['active', 'past_due', 'canceled', 'trialing'],
+        default: 'active',
+      },
+      currentPeriodEnd: Date,
+      cancelAtPeriodEnd: {
+        type: Boolean,
+        default: false,
+      },
+    },
+    security: {
+      twoFactorRequired: {
+        type: Boolean,
+        default: false,
+      },
+      sessionTimeoutMinutes: {
+        type: Number,
+        default: 480, // 8 hours
+      },
+      dataRetentionDays: {
+        type: Number,
+        default: 90,
+      },
+      ipWhitelist: {
+        type: [String],
+        default: [],
+      },
+    },
+    apiKeys: {
+      publicKey: String,
+      secretKeyHash: String,
+      webhookSecret: String,
+      lastRotatedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+    industry: String,
+    primaryLanguage: {
+      type: String,
+      default: 'en',
+    },
+    logoUrl: String,
     active: {
       type: Boolean,
       default: true,
@@ -239,5 +365,6 @@ const companySchema = new Schema<ICompany>(
 companySchema.index({ slug: 1 }, { unique: true });
 companySchema.index({ active: 1 });
 companySchema.index({ tier: 1 });
+companySchema.index({ 'billing.stripeCustomerId': 1 });
 
 export const Company: Model<ICompany> = mongoose.model<ICompany>('Company', companySchema);

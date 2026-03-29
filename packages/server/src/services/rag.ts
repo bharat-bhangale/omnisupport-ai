@@ -5,6 +5,7 @@ import { env } from '../config/env.js';
 import { OPENAI_CONFIG, PINECONE_CONFIG } from '../config/constants.js';
 import { logger } from '../config/logger.js';
 import { KBGap } from '../models/KBDocument.js';
+import { emitKBGap } from '../sockets/activitySocket.js';
 import type { Channel } from '../config/constants.js';
 
 const childLogger = logger.child({ service: 'rag' });
@@ -119,6 +120,9 @@ export async function detectKBGap(
       { companyId, channel, queryPreview: query.slice(0, 50) },
       'KB gap detected and recorded'
     );
+
+    // Emit activity event for KB gap
+    await emitKBGap(companyId, query, channel);
   } catch (error) {
     childLogger.warn({ error, companyId }, 'Failed to record KB gap');
     // Non-blocking - don't throw

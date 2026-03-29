@@ -30,6 +30,13 @@ export const omnisupportApi = createApi({
     'Workflow',
     'SLA',
     'AgentConfig',
+    'Company',
+    'Team',
+    'Billing',
+    'ApiKeys',
+    'Escalation',
+    'Integration',
+    'QAReport',
   ],
   endpoints: () => ({}),
 });
