@@ -12,6 +12,14 @@ interface ErrorResponse {
     details?: Record<string, unknown>;
     stack?: string;
   };
+  requestId?: string;
+}
+
+/**
+ * Get request ID from request (set by requestId middleware)
+ */
+function getRequestId(req: Request): string | undefined {
+  return (req as Request & { id?: string }).id;
 }
 
 /**
@@ -23,13 +31,17 @@ export const errorHandler: ErrorRequestHandler = (
   res: Response,
   _next: NextFunction
 ): void => {
-  // Log the error
+  const requestId = getRequestId(req);
+
+  // Log context
   const logContext = {
+    requestId,
     method: req.method,
     path: req.path,
     query: req.query,
     ip: req.ip,
-    userId: (req as Request & { user?: { sub?: string } }).user?.sub,
+    userId: (req as Request & { user?: { sub?: string; userId?: string } }).user?.userId ||
+            (req as Request & { user?: { sub?: string } }).user?.sub,
   };
 
   // Handle Zod validation errors
@@ -41,7 +53,7 @@ export const errorHandler: ErrorRequestHandler = (
       })),
     });
 
-    logger.warn({ ...logContext, error: validationError }, 'Validation error');
+    logger.warn({ ...logContext, err: validationError }, 'Validation error');
 
     const response: ErrorResponse = {
       success: false,
@@ -50,6 +62,7 @@ export const errorHandler: ErrorRequestHandler = (
         code: validationError.code,
         details: validationError.details,
       },
+      requestId,
     };
 
     res.status(validationError.statusCode).json(response);
@@ -59,9 +72,9 @@ export const errorHandler: ErrorRequestHandler = (
   // Handle AppError instances
   if (err instanceof AppError) {
     if (err.isOperational) {
-      logger.warn({ ...logContext, error: err }, 'Operational error');
+      logger.warn({ ...logContext, err }, 'Operational error');
     } else {
-      logger.error({ ...logContext, error: err }, 'Non-operational error');
+      logger.error({ ...logContext, err }, 'Non-operational error');
     }
 
     const response: ErrorResponse = {
@@ -72,6 +85,7 @@ export const errorHandler: ErrorRequestHandler = (
         details: err.details,
         ...(env.NODE_ENV === 'development' && { stack: err.stack }),
       },
+      requestId,
     };
 
     res.status(err.statusCode).json(response);
@@ -79,7 +93,7 @@ export const errorHandler: ErrorRequestHandler = (
   }
 
   // Handle unknown errors
-  logger.error({ ...logContext, error: err, stack: err.stack }, 'Unhandled error');
+  logger.error({ ...logContext, err, stack: err.stack }, 'Unhandled error');
 
   const response: ErrorResponse = {
     success: false,
@@ -90,6 +104,7 @@ export const errorHandler: ErrorRequestHandler = (
       code: 'INTERNAL_ERROR',
       ...(env.NODE_ENV === 'development' && { stack: err.stack }),
     },
+    requestId,
   };
 
   res.status(500).json(response);
@@ -99,12 +114,15 @@ export const errorHandler: ErrorRequestHandler = (
  * 404 handler for unmatched routes
  */
 export const notFoundHandler = (req: Request, res: Response): void => {
+  const requestId = getRequestId(req);
+
   const response: ErrorResponse = {
     success: false,
     error: {
       message: `Route ${req.method} ${req.path} not found`,
       code: 'NOT_FOUND',
     },
+    requestId,
   };
 
   res.status(404).json(response);
