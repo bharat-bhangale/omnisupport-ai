@@ -17,6 +17,7 @@ import {
 } from '../types/ticket.js';
 import { buildCustomerCard } from '../services/customerIntelligence.js';
 import { responseQueue } from './index.js';
+import { emitTicketClassified } from '../sockets/activitySocket.js';
 
 const childLogger = logger.child({ worker: 'classification' });
 
@@ -436,6 +437,14 @@ async function processClassificationJob(job: Job<ClassificationJobData>): Promis
         processingTimeMs,
       },
       'Classification completed'
+    );
+
+    // Emit activity event
+    await emitTicketClassified(
+      data.companyId,
+      data.ticketId,
+      classification.intent || 'Unknown',
+      classification.priority || 'P3'
     );
 
     return {

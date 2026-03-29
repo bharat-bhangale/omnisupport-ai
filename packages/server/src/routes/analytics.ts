@@ -7,6 +7,10 @@ import { Ticket } from '../models/Ticket.js';
 import { FeedbackEvent } from '../models/FeedbackEvent.js';
 import { CallSession } from '../models/CallSession.js';
 import { Escalation } from '../models/Escalation.js';
+import * as analyticsService from '../services/analytics.js';
+import { getAnalytics } from '../queues/analyticsCacheWorker.js';
+import { roleGuard } from '../middleware/roleGuard.js';
+import { getRecentActivity } from '../sockets/activitySocket.js';
 
 const router = Router();
 const childLogger = logger.child({ route: 'analytics' });
@@ -422,6 +426,7 @@ router.get(
 
 /**
  * GET /analytics/activity - Get live activity feed
+ * First tries Redis-stored events, then falls back to MongoDB aggregation
  */
 router.get(
   '/activity',
@@ -432,25 +437,35 @@ router.get(
     }
 
     const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+
+    // Try to get recent activities from Redis first (real-time events)
+    const redisActivities = await getRecentActivity(companyId, limit);
+
+    if (redisActivities.length >= limit) {
+      // We have enough from Redis
+      return res.json({
+        activities: redisActivities.slice(0, limit),
+        timestamp: new Date().toISOString(),
+        source: 'realtime',
+      });
+    }
+
+    // Fall back to MongoDB aggregation for additional activities
     const companyObjectId = new mongoose.Types.ObjectId(companyId);
 
-    // Get recent activities from different sources
     const [recentCalls, recentTickets, recentEscalations] = await Promise.all([
-      // Recent call events
       CallSession.find({ companyId: companyObjectId })
         .sort({ updatedAt: -1 })
         .limit(limit)
         .select('callId callerPhone status sentiment.overall startedAt endedAt intent')
         .lean(),
 
-      // Recent ticket updates
       Ticket.find({ companyId: companyObjectId })
         .sort({ updatedAt: -1 })
         .limit(limit)
         .select('subject status priority category updatedAt aiDraft')
         .lean(),
 
-      // Recent escalations
       Escalation.find({ companyId: companyObjectId })
         .sort({ createdAt: -1 })
         .limit(5)
@@ -752,6 +767,205 @@ router.get(
         pages: Math.ceil(total / limit),
       },
     });
+  })
+);
+
+// ============================================================================
+// NEW F17 ANALYTICS ENDPOINTS (Manager/Admin only)
+// ============================================================================
+
+/**
+ * GET /analytics/unified-summary - Full analytics summary with caching
+ */
+router.get(
+  '/unified-summary',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const days = Math.min(parseInt(req.query.days as string) || 30, 90);
+
+    // Use cached analytics
+    const analytics = await getAnalytics(companyId, days);
+
+    res.json({
+      ...analytics.summary,
+      cachedAt: analytics.cachedAt,
+    });
+  })
+);
+
+/**
+ * GET /analytics/resolution-rate - Daily resolution rate data
+ */
+router.get(
+  '/resolution-rate',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const days = Math.min(parseInt(req.query.days as string) || 30, 90);
+    const data = await analyticsService.getDailyResolutionRate(companyId, days);
+
+    res.json({ data });
+  })
+);
+
+/**
+ * GET /analytics/cost-savings - Cost savings breakdown
+ */
+router.get(
+  '/cost-savings',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const days = Math.min(parseInt(req.query.days as string) || 30, 90);
+    const data = await analyticsService.getCostSavings(companyId, days);
+
+    res.json(data);
+  })
+);
+
+/**
+ * GET /analytics/top-intents - Top call intents
+ */
+router.get(
+  '/top-intents',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const days = Math.min(parseInt(req.query.days as string) || 30, 90);
+    const data = await analyticsService.getTopIntents(companyId, days);
+
+    res.json({ data });
+  })
+);
+
+/**
+ * GET /analytics/sentiment - Sentiment trend over time
+ */
+router.get(
+  '/sentiment',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const days = Math.min(parseInt(req.query.days as string) || 30, 90);
+    const data = await analyticsService.getSentimentTrend(companyId, days);
+
+    res.json({ data });
+  })
+);
+
+/**
+ * GET /analytics/sla - SLA compliance by priority
+ */
+router.get(
+  '/sla',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const days = Math.min(parseInt(req.query.days as string) || 30, 90);
+    const data = await analyticsService.getSLACompliance(companyId, days);
+
+    res.json(data);
+  })
+);
+
+/**
+ * GET /analytics/kb-health - Knowledge base hit rate
+ */
+router.get(
+  '/kb-health',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const days = Math.min(parseInt(req.query.days as string) || 30, 90);
+    const data = await analyticsService.getKBHitRate(companyId, days);
+
+    res.json(data);
+  })
+);
+
+/**
+ * GET /analytics/ticket-volume - Daily ticket volume by category
+ */
+router.get(
+  '/ticket-volume',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const days = Math.min(parseInt(req.query.days as string) || 30, 90);
+    const data = await analyticsService.getDailyTicketVolume(companyId, days);
+
+    res.json({ data });
+  })
+);
+
+/**
+ * GET /analytics/channel-distribution - Channel split data
+ */
+router.get(
+  '/channel-distribution',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const days = Math.min(parseInt(req.query.days as string) || 30, 90);
+    const data = await analyticsService.getChannelDistribution(companyId, days);
+
+    res.json({ data });
+  })
+);
+
+/**
+ * GET /analytics/full - All analytics data (cached)
+ */
+router.get(
+  '/full',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const days = Math.min(parseInt(req.query.days as string) || 30, 90);
+    const analytics = await getAnalytics(companyId, days);
+
+    res.json(analytics);
   })
 );
 

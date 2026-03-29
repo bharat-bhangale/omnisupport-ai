@@ -12,6 +12,7 @@ import { Company } from '../models/Company.js';
 import { qaQueue, classificationQueue } from './index.js';
 import { getOrchestrator } from '../integrations/IntegrationOrchestrator.js';
 import { sendCallSummary } from '../services/slackNotifier.js';
+import { emitCallResolved, emitCallEscalated } from '../sockets/activitySocket.js';
 import type { SummaryJobData } from '../types/session.js';
 
 const childLogger = logger.child({ worker: 'summary' });
@@ -361,6 +362,15 @@ async function processSummaryJob(job: Job<SummaryJobData>): Promise<void> {
     companyId,
     channel,
   });
+
+  // Emit activity event based on resolution status
+  if (channel === 'voice') {
+    if (summary.resolutionStatus === 'resolved') {
+      await emitCallResolved(companyId, interactionId, summary.issueType);
+    } else if (summary.resolutionStatus === 'escalated') {
+      await emitCallEscalated(companyId, interactionId, summary.issueType);
+    }
+  }
 
   childLogger.info(
     {
