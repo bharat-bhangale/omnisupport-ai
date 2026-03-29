@@ -10,6 +10,7 @@ import { env } from '../config/env.js';
 import { OPENAI_CONFIG } from '../config/constants.js';
 import { buildCustomerCard } from '../services/customerIntelligence.js';
 import { buildTicketMessages } from '../services/llm.js';
+import { emitTicketSent } from '../sockets/activitySocket.js';
 import {
   ClassificationFeedbackSchema,
   ClassificationJobData,
@@ -538,6 +539,9 @@ router.post(
         await ticket.save();
 
         childLogger.info({ ticketId: ticket._id }, 'AI response approved');
+
+        // Emit activity event
+        await emitTicketSent(companyId, ticket._id.toString(), true);
         break;
       }
 
@@ -573,6 +577,9 @@ router.post(
         });
 
         childLogger.info({ ticketId: ticket._id }, 'AI response edited and approved');
+
+        // Emit activity event (edited content is still AI-assisted)
+        await emitTicketSent(companyId, ticket._id.toString(), true);
         break;
       }
 
