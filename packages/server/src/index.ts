@@ -10,7 +10,9 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { vapiWebhookHandler, getCallSessionState } from './webhooks/vapi.js';
 import { vapiToolsHandler } from './webhooks/vapiTools.js';
 import authRouter from './routes/auth.js';
+import callsRouter from './routes/calls.js';
 import escalationsRouter from './routes/escalations.js';
+import extensionRouter from './routes/extension.js';
 import integrationsRouter from './routes/integrations.js';
 import qaRouter from './routes/qa.js';
 import analyticsRouter from './routes/analytics.js';
@@ -95,7 +97,9 @@ async function bootstrap(): Promise<void> {
 
   // API routes (auth middleware applied per-router as needed)
   app.use('/api/auth', authRouter);
+  app.use('/api/calls', callsRouter);
   app.use('/api/escalations', escalationsRouter);
+  app.use('/api/extension', extensionRouter);
   app.use('/api/integrations', integrationsRouter);
   app.use('/api/qa', qaRouter);
   app.use('/api/analytics', analyticsRouter);

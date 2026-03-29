@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "OmniSupport AI",
+  "version": "1.0.0",
+  "description": "AI-powered support assistant for Zendesk and Freshdesk",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "identity"
+  ],
+  "host_permissions": [
+    "https://*.zendesk.com/*",
+    "https://*.freshdesk.com/*"
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.zendesk.com/*",
+        "https://*.freshdesk.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["panel.html", "panel.js", "panel.css"],
+      "matches": ["https://*.zendesk.com/*", "https://*.freshdesk.com/*"]
+    }
+  ],
+  "oauth2": {
+    "client_id": "YOUR_AUTH0_CLIENT_ID",
+    "scopes": ["openid", "profile", "email"]
+  }
+}
