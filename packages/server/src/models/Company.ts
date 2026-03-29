@@ -12,6 +12,8 @@ export interface VoiceConfig {
 export interface TextConfig {
   classificationCategories: string[];
   brandVoice: string;
+  supportedLanguages: string[];
+  autoDetect: boolean;
 }
 
 export interface QARubricDimension {
@@ -144,6 +146,14 @@ const textConfigSchema = new Schema<TextConfig>(
     brandVoice: {
       type: String,
       default: 'Professional, friendly, and helpful. Use clear language and be empathetic to customer concerns.',
+    },
+    supportedLanguages: {
+      type: [String],
+      default: ['en'],
+    },
+    autoDetect: {
+      type: Boolean,
+      default: true,
     },
   },
   { _id: false }
