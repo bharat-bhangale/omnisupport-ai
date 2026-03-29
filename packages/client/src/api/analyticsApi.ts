@@ -112,6 +112,36 @@ export interface SystemStatusResponse {
   services: Record<string, SystemService>;
 }
 
+export interface CallHistoryItem {
+  id: string;
+  phone: string;
+  intent: string;
+  sentiment: string;
+  status: 'active' | 'completed' | 'escalated';
+  startedAt: string;
+  endedAt?: string;
+  duration: number;
+  qaScore?: number;
+  resolution?: string;
+}
+
+export interface CallHistoryResponse {
+  calls: CallHistoryItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+export interface CallHistoryParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  days?: number;
+}
+
 export const analyticsApi = omnisupportApi.injectEndpoints({
   endpoints: (builder) => ({
     /**
@@ -177,6 +207,21 @@ export const analyticsApi = omnisupportApi.injectEndpoints({
       query: () => '/analytics/system-status',
       providesTags: ['Analytics'],
     }),
+
+    /**
+     * Get call history with QA scores
+     */
+    getCallHistory: builder.query<CallHistoryResponse, CallHistoryParams>({
+      query: ({ page = 1, limit = 20, status, days = 7 }) => {
+        const params = new URLSearchParams();
+        params.set('page', String(page));
+        params.set('limit', String(limit));
+        params.set('days', String(days));
+        if (status) params.set('status', status);
+        return `/analytics/call-history?${params.toString()}`;
+      },
+      providesTags: ['Calls'],
+    }),
   }),
 });
 
@@ -189,4 +234,5 @@ export const {
   useGetRecentTicketsQuery,
   useGetResolutionChartQuery,
   useGetSystemStatusQuery,
+  useGetCallHistoryQuery,
 } = analyticsApi;
