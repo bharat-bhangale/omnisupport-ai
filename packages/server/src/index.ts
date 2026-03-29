@@ -9,6 +9,7 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { vapiWebhookHandler, getCallSessionState } from './webhooks/vapi.js';
 import { vapiToolsHandler } from './webhooks/vapiTools.js';
 import escalationsRouter from './routes/escalations.js';
+import integrationsRouter from './routes/integrations.js';
 import { initEscalationSocket, cleanupEscalationSocket } from './sockets/escalationSocket.js';
 import { initSentimentSocket } from './sockets/sentimentSocket.js';
 
@@ -30,6 +31,7 @@ async function bootstrap(): Promise<void> {
 
   // API routes
   app.use('/api/escalations', escalationsRouter);
+  app.use('/api/integrations', integrationsRouter);
 
   // Debug endpoint (would need auth in production)
   app.get('/debug/sessions/:callId', getCallSessionState);

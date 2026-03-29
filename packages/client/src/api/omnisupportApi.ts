@@ -35,6 +35,7 @@ export const omnisupportApi = createApi({
     'Billing',
     'ApiKeys',
     'Escalation',
+    'Integration',
   ],
   endpoints: () => ({}),
 });
