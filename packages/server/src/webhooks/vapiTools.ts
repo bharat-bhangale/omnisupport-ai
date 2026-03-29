@@ -3,10 +3,16 @@ import crypto from 'crypto';
 import { z } from 'zod';
 import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
+import { redis, buildRedisKey } from '../config/redis.js';
 import { getSession, appendTurn, updateSlots } from '../services/contextMemory.js';
 import { AppError } from '../middleware/AppError.js';
+import { handleEscalation } from '../tools/escalateToHuman.js';
+import { lookupCustomer } from '../tools/lookupCustomer.js';
 
 const childLogger = logger.child({ webhook: 'vapiTools' });
+
+// Idempotency TTL in seconds
+const IDEMPOTENCY_TTL = 300; // 5 minutes
 
 // Zod schema for tool call payload
 const toolCallPayloadSchema = z.object({
@@ -59,7 +65,7 @@ function extractCompanyId(call: ToolCallPayload['call']): string {
  */
 const toolHandlers: Record<
   string,
-  (args: Record<string, unknown>, companyId: string, callId: string) => Promise<string>
+  (args: Record<string, unknown>, companyId: string, callId: string, twilioCallSid?: string) => Promise<string>
 > = {
   /**
    * Look up order status
@@ -130,21 +136,44 @@ const toolHandlers: Record<
   },
 
   /**
-   * Escalate to human agent
+   * Escalate to human agent - REAL IMPLEMENTATION
    */
-  async escalateToHuman(args, companyId, callId) {
+  async escalate_to_human(args, companyId, callId, twilioCallSid) {
     const reason = (args.reason as string) || 'customer_request';
+    const priority = (args.priority as 'low' | 'medium' | 'high' | 'urgent') || 'medium';
+    const urgentIssue = args.urgent_issue === true;
 
-    childLogger.info({ callId, companyId, reason }, 'Escalating to human');
+    childLogger.info({ callId, companyId, reason, priority }, 'Escalating to human');
 
-    // TODO: Trigger actual transfer via Twilio
-    return 'Connecting you with a human agent now. Please hold for a moment.';
+    const result = await handleEscalation({
+      callId,
+      companyId,
+      reason,
+      priority,
+      urgentIssue,
+      twilioCallSid,
+    });
+
+    return result.ttsResponse;
+  },
+
+  /**
+   * Lookup customer information - REAL IMPLEMENTATION
+   */
+  async lookup_customer(args, companyId, callId) {
+    const phone = args.phone as string | undefined;
+    const email = args.email as string | undefined;
+    const customerId = args.customer_id as string | undefined;
+
+    childLogger.info({ callId, companyId, phone, email }, 'Looking up customer');
+
+    return lookupCustomer({ phone, email, customerId }, companyId);
   },
 
   /**
    * Search knowledge base
    */
-  async searchKB(args, companyId, callId) {
+  async search_knowledge_base(args, companyId, callId) {
     const query = args.query as string;
 
     childLogger.info({ callId, companyId, query }, 'Searching knowledge base');
@@ -154,7 +183,37 @@ const toolHandlers: Record<
       'the answer to your question is available in our help center. ' +
       'Would you like me to provide more specific information?';
   },
+
+  // Legacy aliases for backward compatibility
+  async escalateToHuman(args, companyId, callId, twilioCallSid) {
+    return toolHandlers.escalate_to_human(args, companyId, callId, twilioCallSid);
+  },
+
+  async searchKB(args, companyId, callId) {
+    return toolHandlers.search_knowledge_base(args, companyId, callId);
+  },
+
+  async lookupCustomer(args, companyId, callId) {
+    return toolHandlers.lookup_customer(args, companyId, callId);
+  },
 };
+
+/**
+ * Check idempotency key in Redis
+ * Returns cached result if available, null otherwise
+ */
+async function checkIdempotency(companyId: string, toolCallId: string): Promise<string | null> {
+  const key = buildRedisKey(companyId, 'tool', toolCallId);
+  return redis.get(key);
+}
+
+/**
+ * Set idempotency key in Redis
+ */
+async function setIdempotency(companyId: string, toolCallId: string, result: string): Promise<void> {
+  const key = buildRedisKey(companyId, 'tool', toolCallId);
+  await redis.setex(key, IDEMPOTENCY_TTL, result);
+}
 
 /**
  * Vapi tool webhook handler
@@ -199,6 +258,17 @@ export async function vapiToolsHandler(req: Request, res: Response): Promise<voi
   );
 
   try {
+    // Check idempotency - return cached result if available
+    const cachedResult = await checkIdempotency(companyId, toolCall.id);
+    if (cachedResult) {
+      childLogger.info(
+        { callId: call.id, toolCallId: toolCall.id },
+        'Returning cached tool result (idempotent)'
+      );
+      res.status(200).json({ result: cachedResult });
+      return;
+    }
+
     // Get the handler for this tool
     const handler = toolHandlers[toolCall.name];
 
@@ -210,14 +280,20 @@ export async function vapiToolsHandler(req: Request, res: Response): Promise<voi
       return;
     }
 
+    // Extract Twilio call SID from metadata if available
+    const twilioCallSid = call.metadata?.twilioCallSid as string | undefined;
+
     // Execute the tool with timeout protection
     const timeoutMs = 1400; // Leave 100ms buffer
     const result = await Promise.race([
-      handler(toolCall.arguments, companyId, call.id),
+      handler(toolCall.arguments, companyId, call.id, twilioCallSid),
       new Promise<string>((_, reject) =>
         setTimeout(() => reject(new Error('Tool execution timeout')), timeoutMs)
       ),
     ]);
+
+    // Store result for idempotency
+    await setIdempotency(companyId, toolCall.id, result);
 
     // Append tool result to session
     await appendTurn(call.id, companyId, {

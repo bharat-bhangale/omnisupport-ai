@@ -5,3 +5,4 @@ export { Ticket, type ITicket } from './Ticket.js';
 export { FeedbackEvent, type IFeedbackEvent } from './FeedbackEvent.js';
 export { Workflow, type IWorkflow, WORKFLOW_TEMPLATES } from './Workflow.js';
 export { KBDocument, type IKBDocument, KBGap, type IKBGap } from './KBDocument.js';
+export { Escalation, type IEscalation, type EscalationStatus, type EscalationPriority } from './Escalation.js';
