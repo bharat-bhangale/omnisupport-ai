@@ -478,6 +478,28 @@ function TicketDetailPanel({
           )}
         </div>
 
+        {/* QA Score Badge */}
+        {ticket.qaScore !== undefined && ticket.qaScore !== null && (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">QA Score</span>
+              </div>
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
+                  ticket.qaScore >= 80
+                    ? 'bg-green-100 text-green-700'
+                    : ticket.qaScore >= 60
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-red-100 text-red-700'
+                }`}
+              >
+                {ticket.qaScore}/100
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Add Note */}
         <div className="rounded-lg border border-gray-200 p-4">
           <h4 className="text-sm font-medium text-gray-700 mb-2">Add Internal Note</h4>

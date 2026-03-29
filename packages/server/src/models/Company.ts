@@ -14,6 +14,19 @@ export interface TextConfig {
   brandVoice: string;
 }
 
+export interface QARubricDimension {
+  minPassScore: number;
+  weight: number;
+}
+
+export interface QARubric {
+  intentUnderstanding: QARubricDimension;
+  responseAccuracy: QARubricDimension;
+  resolutionSuccess: QARubricDimension;
+  escalationCorrectness: QARubricDimension;
+  customerExperience: QARubricDimension;
+}
+
 export interface ICompany extends Document {
   name: string;
   slug: string;
@@ -73,6 +86,7 @@ export interface ICompany extends Document {
     escalationEmail?: string;
     slaEnabled: boolean;
   };
+  qaRubric?: QARubric;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -251,6 +265,28 @@ const companySchema = new Schema<ICompany>(
       slaEnabled: {
         type: Boolean,
         default: true,
+      },
+    },
+    qaRubric: {
+      intentUnderstanding: {
+        minPassScore: { type: Number, default: 6 },
+        weight: { type: Number, default: 0.20 },
+      },
+      responseAccuracy: {
+        minPassScore: { type: Number, default: 7 },
+        weight: { type: Number, default: 0.25 },
+      },
+      resolutionSuccess: {
+        minPassScore: { type: Number, default: 6 },
+        weight: { type: Number, default: 0.25 },
+      },
+      escalationCorrectness: {
+        minPassScore: { type: Number, default: 7 },
+        weight: { type: Number, default: 0.15 },
+      },
+      customerExperience: {
+        minPassScore: { type: Number, default: 6 },
+        weight: { type: Number, default: 0.15 },
       },
     },
     billing: {

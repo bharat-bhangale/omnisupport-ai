@@ -690,4 +690,69 @@ router.get(
   })
 );
 
+/**
+ * GET /analytics/call-history - Get call history with QA scores
+ */
+router.get(
+  '/call-history',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+    const skip = (page - 1) * limit;
+    const status = req.query.status as string | undefined;
+    const daysBack = parseInt(req.query.days as string) || 7;
+
+    const companyObjectId = new mongoose.Types.ObjectId(companyId);
+
+    const query: Record<string, unknown> = {
+      companyId: companyObjectId,
+      startedAt: { $gte: new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000) },
+    };
+
+    if (status && ['completed', 'active', 'escalated'].includes(status)) {
+      query.status = status;
+    }
+
+    const [calls, total] = await Promise.all([
+      CallSession.find(query)
+        .sort({ startedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .select('callId callerPhone intent sentiment.overall status startedAt endedAt qaScore resolution')
+        .lean(),
+      CallSession.countDocuments(query),
+    ]);
+
+    const formattedCalls = calls.map((call) => ({
+      id: call.callId,
+      phone: maskPhone(call.callerPhone),
+      intent: call.intent || 'Unknown',
+      sentiment: call.sentiment?.overall || 'neutral',
+      status: call.status,
+      startedAt: call.startedAt,
+      endedAt: call.endedAt,
+      duration: call.endedAt
+        ? Math.floor((new Date(call.endedAt).getTime() - new Date(call.startedAt).getTime()) / 1000)
+        : Math.floor((Date.now() - new Date(call.startedAt).getTime()) / 1000),
+      qaScore: call.qaScore,
+      resolution: call.resolution,
+    }));
+
+    res.json({
+      calls: formattedCalls,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  })
+);
+
 export default router;
