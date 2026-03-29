@@ -8,7 +8,10 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  ShieldAlert,
 } from 'lucide-react';
+import { FraudRiskBadge } from './FraudRiskBadge';
+import type { RiskLevel } from '../api/fraudApi';
 
 export interface ActiveCallData {
   callId: string;
@@ -23,6 +26,9 @@ export interface ActiveCallData {
   turnCount: number;
   startedAt: string;
   hasProactiveContext?: boolean;
+  fraudScore?: number;
+  fraudRiskLevel?: RiskLevel;
+  isHighRisk?: boolean;
 }
 
 interface LiveCallCardProps {
@@ -113,13 +119,18 @@ export default function LiveCallCard({ call, onViewTranscript, onEscalate }: Liv
   const flag = languageFlags[call.language] || '🌐';
   const intentLabel = intentLabels[call.currentIntent] || call.currentIntent;
 
-  // Determine if call is high risk
-  const isHighRisk = call.sentimentScore < 0.4 || call.confidence < 0.6;
+  // Determine if call is high risk (sentiment/confidence OR fraud)
+  const isAtRisk = call.sentimentScore < 0.4 || call.confidence < 0.6;
+  const hasFraudRisk = (call.fraudScore !== undefined && call.fraudScore > 0.55) || call.isHighRisk;
 
   return (
     <div
       className={`bg-white rounded-xl shadow-sm border-2 p-4 transition-all hover:shadow-md ${
-        isHighRisk ? 'border-red-300' : 'border-gray-200'
+        hasFraudRisk
+          ? 'border-red-500 animate-pulse'
+          : isAtRisk
+          ? 'border-red-300'
+          : 'border-gray-200'
       }`}
     >
       {/* Header Row */}
@@ -136,6 +147,14 @@ export default function LiveCallCard({ call, onViewTranscript, onEscalate }: Liv
               title="Proactive suggestions active — AI is anticipating follow-ups"
             >
               PRO
+            </span>
+          )}
+          {/* Fraud Risk Badge */}
+          {hasFraudRisk && call.fraudRiskLevel && (
+            <span
+              title={`Fraud risk detected — score: ${((call.fraudScore || 0) * 100).toFixed(0)}%`}
+            >
+              <FraudRiskBadge riskLevel={call.fraudRiskLevel} size="sm" />
             </span>
           )}
         </div>
@@ -182,12 +201,20 @@ export default function LiveCallCard({ call, onViewTranscript, onEscalate }: Liv
           </span>
           <sentimentInfo.TrendIcon className="h-3 w-3 text-gray-400" />
         </div>
-        {isHighRisk && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">
-            <AlertTriangle className="h-3 w-3" />
-            At Risk
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {hasFraudRisk && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">
+              <ShieldAlert className="h-3 w-3" />
+              Fraud Risk
+            </span>
+          )}
+          {isAtRisk && !hasFraudRisk && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">
+              <AlertTriangle className="h-3 w-3" />
+              At Risk
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Action Buttons */}
