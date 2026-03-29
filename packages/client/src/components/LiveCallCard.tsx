@@ -11,12 +11,14 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { FraudRiskBadge } from './FraudRiskBadge';
+import { AnimatedLanguageBadge } from './LanguageBadge';
 import type { RiskLevel } from '../api/fraudApi';
 
 export interface ActiveCallData {
   callId: string;
   callerPhone: string;
   language: string;
+  languageDetected?: boolean; // true if language was auto-detected
   duration: number;
   currentIntent: string;
   confidence: number;
@@ -37,21 +39,7 @@ interface LiveCallCardProps {
   onEscalate: (callId: string) => void;
 }
 
-// Language flag emoji map
-const languageFlags: Record<string, string> = {
-  en: '🇺🇸',
-  es: '🇪🇸',
-  fr: '🇫🇷',
-  de: '🇩🇪',
-  pt: '🇧🇷',
-  it: '🇮🇹',
-  ja: '🇯🇵',
-  zh: '🇨🇳',
-  ko: '🇰🇷',
-  ar: '🇸🇦',
-  hi: '🇮🇳',
-  ru: '🇷🇺',
-};
+// Language flag map removed - using LanguageBadge component now
 
 // Intent display names
 const intentLabels: Record<string, string> = {
@@ -116,8 +104,9 @@ export default function LiveCallCard({ call, onViewTranscript, onEscalate }: Liv
   };
 
   const sentimentInfo = getSentimentInfo(call.sentimentScore, call.sentimentTrend);
-  const flag = languageFlags[call.language] || '🌐';
   const intentLabel = intentLabels[call.currentIntent] || call.currentIntent;
+  // Show detecting animation on first turn
+  const isDetectingLanguage = call.turnCount === 1 && call.languageDetected;
 
   // Determine if call is high risk (sentiment/confidence OR fraud)
   const isAtRisk = call.sentimentScore < 0.4 || call.confidence < 0.6;
@@ -159,7 +148,13 @@ export default function LiveCallCard({ call, onViewTranscript, onEscalate }: Liv
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-lg">{flag}</span>
+          <AnimatedLanguageBadge
+            languageCode={call.language}
+            detected={call.languageDetected}
+            size="sm"
+            showName={true}
+            isDetecting={isDetectingLanguage}
+          />
           <div className="flex items-center gap-1 text-gray-500">
             <Clock className="h-4 w-4" />
             <span className="font-mono text-sm font-medium">{formatDuration(liveDuration)}</span>

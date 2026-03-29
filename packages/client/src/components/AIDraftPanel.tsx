@@ -7,16 +7,19 @@ import {
   AlertTriangle,
   BookOpen,
   Loader2,
+  Languages,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Ticket, DraftTone, KBArticleRef } from '../types/ticket';
 import { useRegenerateDraftMutation, useSendResponseMutation } from '../api/ticketsApi';
 import ToneSelector from './ToneSelector';
 import DraftFeedbackRow from './DraftFeedbackRow';
+import { getLanguageName, getLanguageFlag } from '../api/languagesApi';
 
 interface AIDraftPanelProps {
   ticket: Ticket;
   onDraftSent?: () => void;
+  primaryLanguage?: string;
 }
 
 function getConfidenceBadge(confidence: number): { bg: string; text: string; label: string } {
@@ -29,8 +32,12 @@ function getConfidenceBadge(confidence: number): { bg: string; text: string; lab
   return { bg: 'bg-red-100', text: 'text-red-700', label: `${Math.round(confidence * 100)}% confidence` };
 }
 
-export function AIDraftPanel({ ticket, onDraftSent }: AIDraftPanelProps): React.ReactElement | null {
+export function AIDraftPanel({ ticket, onDraftSent, primaryLanguage = 'en' }: AIDraftPanelProps): React.ReactElement | null {
   const [editedContent, setEditedContent] = useState<string>(ticket.aiDraft?.content ?? '');
+  const [selectedTone, setSelectedTone] = useState<DraftTone>(ticket.aiDraft?.tone ?? 'professional');
+  const [showTranslation, setShowTranslation] = useState(false);
+
+  const isNonPrimaryLanguage = ticket.language && ticket.language !== primaryLanguage;
   const [selectedTone, setSelectedTone] = useState<DraftTone>(ticket.aiDraft?.tone ?? 'professional');
 
   const [regenerateDraft, { isLoading: isRegenerating }] = useRegenerateDraftMutation();
@@ -117,6 +124,28 @@ export function AIDraftPanel({ ticket, onDraftSent }: AIDraftPanelProps): React.
           {draft.reviewReason && (
             <span className="text-sm text-amber-600">— {draft.reviewReason}</span>
           )}
+        </div>
+      )}
+
+      {/* Multilingual Info Banner */}
+      {isNonPrimaryLanguage && (
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Languages className="w-4 h-4 text-teal-600" />
+            <span className="text-sm text-teal-700">
+              Draft generated in{' '}
+              <span className="font-medium">
+                {getLanguageFlag(ticket.language)} {getLanguageName(ticket.language)}
+              </span>{' '}
+              to match customer
+            </span>
+          </div>
+          <button
+            onClick={() => setShowTranslation(!showTranslation)}
+            className="text-xs px-2 py-1 text-teal-600 hover:text-teal-800 border border-teal-300 rounded hover:bg-teal-100 transition-colors"
+          >
+            {showTranslation ? 'Hide English' : 'Translate to English'}
+          </button>
         </div>
       )}
 

@@ -25,6 +25,7 @@ import { SentimentBar, SentimentEmoji } from '../components/SentimentBar';
 import { AIDraftPanel } from '../components/AIDraftPanel';
 import { CustomerContextCard } from '../components/CustomerContextCard';
 import { ResponseHistoryAccordion } from '../components/ResponseHistoryAccordion';
+import { LanguageBadge } from '../components/LanguageBadge';
 import type { Ticket, TicketStatus, InternalPriority, TicketSource, TicketListQuery } from '../types/ticket';
 
 // Filter state type
@@ -269,15 +270,18 @@ function TicketRow({
   ticket,
   isSelected,
   onClick,
+  primaryLanguage = 'en',
 }: {
   ticket: Ticket;
   isSelected: boolean;
   onClick: () => void;
+  primaryLanguage?: string;
 }): React.ReactElement {
   const customer = getCustomerDisplay(ticket);
   const sla = getSLAStatus(ticket.sla?.responseDeadline);
   const isP1 = ticket.priority === 'urgent';
   const hasDraft = !!ticket.aiDraft;
+  const isNonPrimaryLanguage = ticket.language && ticket.language !== primaryLanguage;
 
   return (
     <div
@@ -310,6 +314,13 @@ function TicketRow({
         )}
       </div>
 
+      {/* Language Badge (only if non-primary language) */}
+      {isNonPrimaryLanguage && (
+        <div className="flex-shrink-0">
+          <LanguageBadge languageCode={ticket.language} size="sm" showName={false} />
+        </div>
+      )}
+
       {/* Sentiment Emoji */}
       <div className="flex-shrink-0 w-6">
         <SentimentEmoji sentiment={ticket.sentiment} size="sm" />
@@ -338,12 +349,15 @@ function TicketRow({
 function TicketDetailPanel({
   ticket,
   onClose,
+  primaryLanguage = 'en',
 }: {
   ticket: Ticket;
   onClose: () => void;
+  primaryLanguage?: string;
 }): React.ReactElement {
   const [noteText, setNoteText] = useState('');
   const customerId = getCustomerId(ticket);
+  const isNonPrimaryLanguage = ticket.language && ticket.language !== primaryLanguage;
   
   const { data: customerData } = useGetCustomerCardQuery(customerId ?? '', {
     skip: !customerId,
@@ -400,6 +414,16 @@ function TicketDetailPanel({
       </div>
 
       <div className="p-4 space-y-4">
+        {/* Customer Language (if non-primary) */}
+        {isNonPrimaryLanguage && (
+          <div className="rounded-lg border border-teal-200 bg-teal-50 p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-teal-700 font-medium">Customer Language:</span>
+              <LanguageBadge languageCode={ticket.language} detected size="sm" />
+            </div>
+          </div>
+        )}
+
         {/* Customer Context Card */}
         {customerData?.customer && (
           <CustomerContextCard
