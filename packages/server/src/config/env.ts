@@ -37,6 +37,7 @@ const envSchema = z.object({
   // Vapi
   VAPI_API_KEY: z.string().min(1),
   VAPI_WEBHOOK_SECRET: z.string().min(1),
+  VAPI_WEBHOOK_URL: z.string().url().optional(),
 
   // ElevenLabs
   ELEVENLABS_API_KEY: z.string().min(1),
