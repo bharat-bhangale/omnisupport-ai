@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Phone,
   PhoneOff,
@@ -11,12 +11,26 @@ import {
   RefreshCw,
   CheckCircle,
   AlertTriangle,
+  X,
+  Sparkles,
+  Bot,
+  User,
+  Wrench,
 } from 'lucide-react';
 import {
   useGetActiveCallsQuery,
   useGetCallHistoryQuery,
+  useGetCallTranscriptQuery,
+  useEscalateCallMutation,
+  type ActiveCall,
   type CallHistoryItem,
-} from '../api/analyticsApi';
+  type Turn,
+} from '../api/callsApi';
+import LiveCallCard from '../components/LiveCallCard';
+
+// ============================================================================
+// HELPER COMPONENTS
+// ============================================================================
 
 // Sentiment indicator
 function SentimentDot({ sentiment }: { sentiment: string }): React.ReactElement {
@@ -69,6 +83,11 @@ function StatusBadge({ status }: { status: string }): React.ReactElement {
       text: 'text-amber-700',
       icon: <ArrowUpRight className="w-3 h-3" />,
     },
+    failed: {
+      bg: 'bg-red-100',
+      text: 'text-red-700',
+      icon: <AlertTriangle className="w-3 h-3" />,
+    },
   };
 
   const config = configs[status] || configs.completed;
@@ -105,43 +124,248 @@ function formatRelativeTime(date: string): string {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-// Active call card
-function ActiveCallCard({ call }: { call: { id: string; phone: string; intent: string; sentiment: string; confidence: number; duration: number } }): React.ReactElement {
+// ============================================================================
+// TRANSCRIPT DRAWER
+// ============================================================================
+
+interface TranscriptDrawerProps {
+  callId: string;
+  onClose: () => void;
+  onEscalate: () => void;
+}
+
+function TranscriptDrawer({ callId, onClose, onEscalate }: TranscriptDrawerProps) {
+  const { data, isLoading } = useGetCallTranscriptQuery(callId);
+
+  const call = data?.call;
+  const turns = data?.turns || [];
+
   return (
-    <div className="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-            <Phone className="w-4 h-4 text-blue-600 animate-pulse" />
+    <div className="fixed inset-y-0 right-0 w-[400px] bg-white shadow-2xl z-50 flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-teal-100 rounded-full">
+            <Phone className="h-4 w-4 text-teal-600" />
           </div>
-          <span className="font-mono text-sm text-gray-700">{call.phone}</span>
+          <div>
+            <h3 className="font-semibold text-gray-900">{call?.callerPhone || 'Loading...'}</h3>
+            <p className="text-xs text-gray-500">
+              {call?.language?.toUpperCase()} • {call ? formatDuration(call.duration) : '--:--'}
+            </p>
+          </div>
         </div>
-        <span className="text-sm font-medium text-blue-600">{formatDuration(call.duration)}</span>
+        <button
+          onClick={onClose}
+          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+        >
+          <X className="h-5 w-5 text-gray-500" />
+        </button>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{call.intent}</span>
-          <SentimentDot sentiment={call.sentiment} />
+      {/* Call Info */}
+      {call && (
+        <div className="px-4 py-3 border-b border-gray-200 bg-gray-50/50">
+          <div className="flex items-center gap-4 text-sm">
+            <StatusBadge status={call.status} />
+            {call.intent && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                <Sparkles className="h-3 w-3" />
+                {call.intent}
+              </span>
+            )}
+            {call.qaScore !== undefined && <QAScoreBadge score={call.qaScore} />}
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500 rounded-full"
-              style={{ width: `${call.confidence * 100}%` }}
+      )}
+
+      {/* Transcript */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-gray-500">Loading transcript...</p>
+          </div>
+        ) : turns.length === 0 ? (
+          <div className="text-center py-8">
+            <Phone className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">No conversation yet</p>
+          </div>
+        ) : (
+          turns.map((turn, idx) => (
+            <TurnBubble key={idx} turn={turn} />
+          ))
+        )}
+      </div>
+
+      {/* Footer Actions */}
+      {call?.status === 'active' && (
+        <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+          <button
+            onClick={onEscalate}
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 text-white font-medium rounded-lg hover:bg-amber-600 transition-colors"
+          >
+            <ArrowUpRight className="h-5 w-5" />
+            Override to Human
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Turn bubble component
+function TurnBubble({ turn }: { turn: Turn }) {
+  const isUser = turn.role === 'user';
+  const isAssistant = turn.role === 'assistant';
+  const isTool = turn.role === 'tool';
+
+  if (isTool) {
+    return (
+      <div className="flex justify-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+          <Wrench className="h-3 w-3" />
+          {turn.toolName || 'Tool'}: {turn.content.slice(0, 50)}...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex ${isUser ? 'justify-start' : 'justify-end'}`}>
+      <div
+        className={`max-w-[85%] rounded-2xl px-4 py-2 ${
+          isUser
+            ? 'bg-gray-100 text-gray-900 rounded-bl-sm'
+            : 'bg-teal-500 text-white rounded-br-sm'
+        }`}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          {isUser ? (
+            <User className="h-3 w-3 opacity-60" />
+          ) : (
+            <Bot className="h-3 w-3 opacity-60" />
+          )}
+          <span className="text-xs opacity-60">
+            {isUser ? 'Customer' : 'AI'}
+          </span>
+        </div>
+        <p className="text-sm">{turn.content}</p>
+        {turn.toolName && (
+          <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 bg-white/20 rounded text-xs">
+            <Wrench className="h-3 w-3" />
+            {turn.toolName}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// ESCALATION MODAL
+// ============================================================================
+
+interface EscalationModalProps {
+  callId: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+function EscalationModal({ callId, onClose, onSuccess }: EscalationModalProps) {
+  const [reason, setReason] = useState('');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
+  const [escalate, { isLoading }] = useEscalateCallMutation();
+
+  const handleEscalate = async () => {
+    try {
+      await escalate({ callId, reason, priority }).unwrap();
+      onSuccess();
+    } catch (error) {
+      console.error('Escalation failed:', error);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Escalate Call</h3>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Reason for escalation
+            </label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Describe why this call needs human intervention..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+              rows={3}
             />
           </div>
-          <span className="text-xs text-gray-500">{Math.round(call.confidence * 100)}%</span>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Priority
+            </label>
+            <div className="flex gap-2">
+              {(['low', 'medium', 'high', 'urgent'] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPriority(p)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    priority === p
+                      ? p === 'urgent'
+                        ? 'bg-red-500 text-white'
+                        : p === 'high'
+                          ? 'bg-amber-500 text-white'
+                          : p === 'medium'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleEscalate}
+            disabled={!reason.trim() || isLoading}
+            className="flex-1 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Escalating...' : 'Escalate Now'}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// Call history row
-function CallHistoryRow({ call }: { call: CallHistoryItem }): React.ReactElement {
+// ============================================================================
+// CALL HISTORY ROW
+// ============================================================================
+
+function CallHistoryRow({ 
+  call, 
+  onViewTranscript 
+}: { 
+  call: CallHistoryItem;
+  onViewTranscript: (callId: string) => void;
+}): React.ReactElement {
   return (
-    <tr className="hover:bg-gray-50 transition-colors">
+    <tr className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => onViewTranscript(call.callId)}>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
@@ -154,13 +378,13 @@ function CallHistoryRow({ call }: { call: CallHistoryItem }): React.ReactElement
             )}
           </div>
           <div>
-            <span className="font-mono text-sm text-gray-700">{call.phone}</span>
+            <span className="font-mono text-sm text-gray-700">{call.callerPhone}</span>
             <p className="text-xs text-gray-400">{formatRelativeTime(call.startedAt)}</p>
           </div>
         </div>
       </td>
       <td className="px-4 py-3">
-        <span className="text-sm text-gray-600">{call.intent}</span>
+        <span className="text-sm text-gray-600">{call.intent || '—'}</span>
       </td>
       <td className="px-4 py-3">
         <StatusBadge status={call.status} />
@@ -172,61 +396,115 @@ function CallHistoryRow({ call }: { call: CallHistoryItem }): React.ReactElement
         </div>
       </td>
       <td className="px-4 py-3">
-        <SentimentDot sentiment={call.sentiment} />
+        <SentimentDot sentiment={call.sentiment || 'neutral'} />
       </td>
       <td className="px-4 py-3">
         <QAScoreBadge score={call.qaScore} />
-      </td>
-      <td className="px-4 py-3">
-        {call.resolution ? (
-          <span className="text-xs text-gray-500">{call.resolution}</span>
-        ) : (
-          <span className="text-xs text-gray-300">—</span>
-        )}
       </td>
     </tr>
   );
 }
 
+// ============================================================================
+// FILTER CHIPS
+// ============================================================================
+
+type FilterType = 'all' | 'ai_handling' | 'escalated' | 'high_risk';
+
+interface FilterChipProps {
+  label: string;
+  active: boolean;
+  count?: number;
+  onClick: () => void;
+}
+
+function FilterChip({ label, active, count, onClick }: FilterChipProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+        active
+          ? 'bg-teal-500 text-white'
+          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+      }`}
+    >
+      {label}
+      {count !== undefined && (
+        <span className={`px-1.5 py-0.5 rounded-full text-xs ${active ? 'bg-white/20' : 'bg-gray-200'}`}>
+          {count}
+        </span>
+      )}
+    </button>
+  );
+}
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
 export function CallMonitor(): React.ReactElement {
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [daysBack, setDaysBack] = useState(7);
+  const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
+  const [escalatingCallId, setEscalatingCallId] = useState<string | null>(null);
 
-  // Fetch active calls (poll every 10s)
-  const { data: activeCallsData, isLoading: loadingActive, refetch: refetchActive } = useGetActiveCallsQuery(undefined, {
-    pollingInterval: 10000,
+  // Fetch active calls (poll every 5s)
+  const { data: activeCallsData, refetch: refetchActive } = useGetActiveCallsQuery(undefined, {
+    pollingInterval: 5000,
   });
 
   // Fetch call history
   const { data: historyData, isLoading: loadingHistory, refetch: refetchHistory } = useGetCallHistoryQuery({
     page,
     limit: 20,
-    status: statusFilter || undefined,
-    days: daysBack,
+    status: activeFilter === 'escalated' ? 'escalated' : 'all',
   });
 
   const activeCalls = activeCallsData?.calls || [];
   const historyCalls = historyData?.calls || [];
   const pagination = historyData?.pagination;
 
-  // Filter history by search
-  const filteredHistory = useMemo(() => {
-    if (!searchQuery.trim()) return historyCalls;
-    const q = searchQuery.toLowerCase();
-    return historyCalls.filter(
-      (c) =>
-        c.phone.toLowerCase().includes(q) ||
-        c.intent.toLowerCase().includes(q) ||
-        c.resolution?.toLowerCase().includes(q)
-    );
-  }, [historyCalls, searchQuery]);
+  // Filter active calls based on filter type
+  const filteredActiveCalls = useMemo(() => {
+    switch (activeFilter) {
+      case 'ai_handling':
+        return activeCalls.filter((c) => c.status === 'active' && c.confidence >= 0.6);
+      case 'escalated':
+        return activeCalls.filter((c) => c.status === 'escalated');
+      case 'high_risk':
+        return activeCalls.filter((c) => c.sentimentScore < 0.4 || c.confidence < 0.6);
+      default:
+        return activeCalls;
+    }
+  }, [activeCalls, activeFilter]);
 
-  const handleRefresh = () => {
+  // Counts for filter chips
+  const counts = useMemo(() => ({
+    all: activeCalls.length,
+    ai_handling: activeCalls.filter((c) => c.status === 'active' && c.confidence >= 0.6).length,
+    escalated: activeCalls.filter((c) => c.status === 'escalated').length,
+    high_risk: activeCalls.filter((c) => c.sentimentScore < 0.4 || c.confidence < 0.6).length,
+  }), [activeCalls]);
+
+  const handleRefresh = useCallback(() => {
     refetchActive();
     refetchHistory();
-  };
+  }, [refetchActive, refetchHistory]);
+
+  const handleViewTranscript = useCallback((callId: string) => {
+    setSelectedCallId(callId);
+  }, []);
+
+  const handleEscalate = useCallback((callId: string) => {
+    setEscalatingCallId(callId);
+  }, []);
+
+  const handleEscalationSuccess = useCallback(() => {
+    setEscalatingCallId(null);
+    setSelectedCallId(null);
+    refetchActive();
+  }, [refetchActive]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -234,9 +512,17 @@ export function CallMonitor(): React.ReactElement {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Call Monitor</h1>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+              <Phone className="h-7 w-7 text-teal-600" />
+              Live Call Monitor
+              {activeCalls.length > 0 && (
+                <span className="inline-flex items-center px-3 py-1 bg-teal-100 text-teal-700 text-sm font-medium rounded-full">
+                  {activeCalls.length} Active
+                </span>
+              )}
+            </h1>
             <p className="text-gray-500 mt-1">
-              {activeCalls.length} active • {pagination?.total || 0} total calls (last {daysBack} days)
+              Monitor active calls and view call history
             </p>
           </div>
           <button
@@ -248,116 +534,110 @@ export function CallMonitor(): React.ReactElement {
           </button>
         </div>
 
-        {/* Active Calls Section */}
-        {activeCalls.length > 0 && (
+        {/* Filter Chips */}
+        <div className="flex gap-2 mb-6">
+          <FilterChip
+            label="All Calls"
+            active={activeFilter === 'all'}
+            count={counts.all}
+            onClick={() => setActiveFilter('all')}
+          />
+          <FilterChip
+            label="AI Handling"
+            active={activeFilter === 'ai_handling'}
+            count={counts.ai_handling}
+            onClick={() => setActiveFilter('ai_handling')}
+          />
+          <FilterChip
+            label="Escalated"
+            active={activeFilter === 'escalated'}
+            count={counts.escalated}
+            onClick={() => setActiveFilter('escalated')}
+          />
+          <FilterChip
+            label="High Risk"
+            active={activeFilter === 'high_risk'}
+            count={counts.high_risk}
+            onClick={() => setActiveFilter('high_risk')}
+          />
+        </div>
+
+        {/* Active Calls Grid */}
+        {filteredActiveCalls.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+              <div className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse" />
               <h2 className="text-lg font-semibold text-gray-800">Active Calls</h2>
-              <span className="text-sm text-gray-500">({activeCalls.length})</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {activeCalls.map((call) => (
-                <ActiveCallCard key={call.id} call={call} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredActiveCalls.map((call) => (
+                <LiveCallCard
+                  key={call.callId}
+                  call={call}
+                  onViewTranscript={handleViewTranscript}
+                  onEscalate={handleEscalate}
+                />
               ))}
             </div>
           </div>
         )}
 
-        {/* Call History Section */}
+        {/* No active calls message */}
+        {filteredActiveCalls.length === 0 && activeFilter !== 'all' && (
+          <div className="mb-8 bg-white rounded-xl border border-gray-200 p-8 text-center">
+            <Phone className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">No calls matching this filter</p>
+          </div>
+        )}
+
+        {/* Call History */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-          {/* Filters */}
           <div className="p-4 border-b border-gray-200">
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Search */}
-              <div className="relative flex-1 min-w-[200px] max-w-md">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-800">Call History</h2>
+              <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search by phone, intent, resolution..."
+                  placeholder="Search calls..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
-
-              {/* Status filter */}
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-400" />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => {
-                    setStatusFilter(e.target.value);
-                    setPage(1);
-                  }}
-                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Statuses</option>
-                  <option value="completed">Completed</option>
-                  <option value="escalated">Escalated</option>
-                  <option value="active">Active</option>
-                </select>
-              </div>
-
-              {/* Days filter */}
-              <select
-                value={daysBack}
-                onChange={(e) => {
-                  setDaysBack(Number(e.target.value));
-                  setPage(1);
-                }}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value={1}>Last 24 hours</option>
-                <option value={7}>Last 7 days</option>
-                <option value={30}>Last 30 days</option>
-                <option value={90}>Last 90 days</option>
-              </select>
             </div>
           </div>
 
-          {/* Table */}
           <div className="overflow-x-auto">
             {loadingHistory ? (
               <div className="p-12 text-center">
-                <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
+                <div className="animate-spin w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full mx-auto mb-4" />
                 <p className="text-gray-500">Loading call history...</p>
               </div>
-            ) : filteredHistory.length === 0 ? (
+            ) : historyCalls.length === 0 ? (
               <div className="p-12 text-center">
                 <PhoneOff className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No calls found</p>
+                <p className="text-gray-500">No call history yet</p>
               </div>
             ) : (
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Caller
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Intent
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Duration
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Sentiment
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      QA Score
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Resolution
-                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Caller</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Intent</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sentiment</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">QA</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredHistory.map((call) => (
-                    <CallHistoryRow key={call.id} call={call} />
+                  {historyCalls.map((call) => (
+                    <CallHistoryRow 
+                      key={call.id} 
+                      call={call} 
+                      onViewTranscript={handleViewTranscript}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -365,27 +645,23 @@ export function CallMonitor(): React.ReactElement {
           </div>
 
           {/* Pagination */}
-          {pagination && pagination.pages > 1 && (
+          {pagination && pagination.totalPages > 1 && (
             <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
               <p className="text-sm text-gray-500">
-                Showing {(page - 1) * pagination.limit + 1} to{' '}
-                {Math.min(page * pagination.limit, pagination.total)} of {pagination.total} calls
+                Page {page} of {pagination.totalPages} ({pagination.total} calls)
               </p>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <span className="text-sm text-gray-600">
-                  Page {page} of {pagination.pages}
-                </span>
                 <button
-                  onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
-                  disabled={page === pagination.pages}
-                  className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                  disabled={page === pagination.totalPages}
+                  className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -394,6 +670,26 @@ export function CallMonitor(): React.ReactElement {
           )}
         </div>
       </div>
+
+      {/* Transcript Drawer */}
+      {selectedCallId && (
+        <TranscriptDrawer
+          callId={selectedCallId}
+          onClose={() => setSelectedCallId(null)}
+          onEscalate={() => {
+            setEscalatingCallId(selectedCallId);
+          }}
+        />
+      )}
+
+      {/* Escalation Modal */}
+      {escalatingCallId && (
+        <EscalationModal
+          callId={escalatingCallId}
+          onClose={() => setEscalatingCallId(null)}
+          onSuccess={handleEscalationSuccess}
+        />
+      )}
     </div>
   );
 }

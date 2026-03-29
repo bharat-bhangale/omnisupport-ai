@@ -1,0 +1,32 @@
+{
+  "name": "@omnisupport/extension",
+  "version": "1.0.0",
+  "description": "OmniSupport AI Chrome Extension for Zendesk/Freshdesk",
+  "private": true,
+  "scripts": {
+    "build": "npm run build:content && npm run build:background && npm run build:panel",
+    "build:content": "esbuild src/content.tsx --bundle --outfile=dist/content.js --target=chrome100 --loader:.tsx=tsx",
+    "build:background": "esbuild src/background.ts --bundle --outfile=dist/background.js --target=chrome100 --format=esm",
+    "build:panel": "esbuild src/panel/index.tsx --bundle --outfile=dist/panel.js --target=chrome100 --loader:.tsx=tsx",
+    "watch": "concurrently \"npm:watch:*\"",
+    "watch:content": "npm run build:content -- --watch",
+    "watch:background": "npm run build:background -- --watch",
+    "watch:panel": "npm run build:panel -- --watch",
+    "copy": "copyfiles -u 0 manifest.json popup.html panel.html *.css icons/* dist/",
+    "dev": "npm run build && npm run copy",
+    "package": "npm run dev && cd dist && zip -r ../omnisupport-extension.zip ."
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.260",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "concurrently": "^8.2.0",
+    "copyfiles": "^2.4.1",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  }
+}
