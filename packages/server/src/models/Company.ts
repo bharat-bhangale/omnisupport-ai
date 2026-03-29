@@ -31,6 +31,20 @@ export interface ICompany extends Document {
       domain: string;
       apiKeyEncrypted: string;
     };
+    salesforce?: {
+      instanceUrl: string;
+      clientId: string;
+      clientSecretEncrypted: string;
+      accessTokenEncrypted?: string;
+      refreshTokenEncrypted?: string;
+    };
+    hubspot?: {
+      apiKeyEncrypted: string;
+    };
+    slack?: {
+      webhookUrl: string;
+      channel?: string;
+    };
     twilio?: {
       phoneNumber: string;
     };
@@ -161,6 +175,20 @@ const companySchema = new Schema<ICompany>(
       freshdesk: {
         domain: String,
         apiKeyEncrypted: String,
+      },
+      salesforce: {
+        instanceUrl: String,
+        clientId: String,
+        clientSecretEncrypted: String,
+        accessTokenEncrypted: String,
+        refreshTokenEncrypted: String,
+      },
+      hubspot: {
+        apiKeyEncrypted: String,
+      },
+      slack: {
+        webhookUrl: String,
+        channel: String,
       },
       twilio: {
         phoneNumber: String,
