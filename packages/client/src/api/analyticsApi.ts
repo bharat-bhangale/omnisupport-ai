@@ -37,6 +37,81 @@ export interface AnalyticsSummary {
   };
 }
 
+export interface DashboardSummary {
+  activeCalls: number;
+  openTickets: number;
+  openTicketTrend: number;
+  aiResolutionRate: number;
+  resolutionRateTrend: number;
+  costSavedToday: number;
+  interactionsToday: number;
+  waitingEscalations: number;
+  timestamp: string;
+}
+
+export interface ActivityItem {
+  id: string;
+  type: string;
+  description: string;
+  category?: string;
+  timestamp: string;
+  sentiment?: string;
+  priority?: string;
+}
+
+export interface ActivityResponse {
+  activities: ActivityItem[];
+  timestamp: string;
+}
+
+export interface ActiveCall {
+  id: string;
+  phone: string;
+  intent: string;
+  sentiment: string;
+  confidence: number;
+  startedAt: string;
+  duration: number;
+}
+
+export interface ActiveCallsResponse {
+  calls: ActiveCall[];
+}
+
+export interface RecentTicket {
+  id: string;
+  subject: string;
+  status: string;
+  priority: string;
+  category?: string;
+  createdAt: string;
+  hasDraft: boolean;
+}
+
+export interface RecentTicketsResponse {
+  tickets: RecentTicket[];
+}
+
+export interface ResolutionChartData {
+  date: string;
+  aiResolved: number;
+  humanResolved: number;
+  total: number;
+}
+
+export interface ResolutionChartResponse {
+  data: ResolutionChartData[];
+}
+
+export interface SystemService {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  lastSync?: string;
+}
+
+export interface SystemStatusResponse {
+  services: Record<string, SystemService>;
+}
+
 export const analyticsApi = omnisupportApi.injectEndpoints({
   endpoints: (builder) => ({
     /**
@@ -54,7 +129,64 @@ export const analyticsApi = omnisupportApi.injectEndpoints({
       query: ({ period }) => `/analytics/summary?period=${period}`,
       providesTags: ['Analytics'],
     }),
+
+    /**
+     * Get dashboard summary stats
+     */
+    getDashboardSummary: builder.query<DashboardSummary, { days?: number }>({
+      query: ({ days = 1 }) => `/analytics/dashboard?days=${days}`,
+      providesTags: ['Analytics'],
+    }),
+
+    /**
+     * Get live activity feed (poll every 30s)
+     */
+    getLiveActivity: builder.query<ActivityResponse, { limit?: number }>({
+      query: ({ limit = 10 }) => `/analytics/activity?limit=${limit}`,
+      providesTags: ['Analytics'],
+    }),
+
+    /**
+     * Get active calls
+     */
+    getActiveCalls: builder.query<ActiveCallsResponse, void>({
+      query: () => '/analytics/active-calls',
+      providesTags: ['Calls'],
+    }),
+
+    /**
+     * Get recent tickets
+     */
+    getRecentTickets: builder.query<RecentTicketsResponse, { limit?: number }>({
+      query: ({ limit = 5 }) => `/analytics/recent-tickets?limit=${limit}`,
+      providesTags: ['Tickets'],
+    }),
+
+    /**
+     * Get resolution chart data
+     */
+    getResolutionChart: builder.query<ResolutionChartResponse, void>({
+      query: () => '/analytics/resolution-chart',
+      providesTags: ['Analytics'],
+    }),
+
+    /**
+     * Get system status
+     */
+    getSystemStatus: builder.query<SystemStatusResponse, void>({
+      query: () => '/analytics/system-status',
+      providesTags: ['Analytics'],
+    }),
   }),
 });
 
-export const { useGetAgentStatsQuery, useGetAnalyticsSummaryQuery } = analyticsApi;
+export const {
+  useGetAgentStatsQuery,
+  useGetAnalyticsSummaryQuery,
+  useGetDashboardSummaryQuery,
+  useGetLiveActivityQuery,
+  useGetActiveCallsQuery,
+  useGetRecentTicketsQuery,
+  useGetResolutionChartQuery,
+  useGetSystemStatusQuery,
+} = analyticsApi;
