@@ -24,11 +24,25 @@ import {
   X,
   Copy,
   Sparkles,
+  History,
+  LayoutGrid,
+  List,
+  Filter,
+  Calendar,
+  TrendingUp,
+  Users,
+  Bell,
+  Shield,
+  Settings,
+  Inbox,
+  FlaskConical,
+  Check,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   useGetWorkflowsQuery,
   useGetTemplatesQuery,
+  useGetWorkflowHistoryQuery,
   useCreateWorkflowMutation,
   useUpdateWorkflowMutation,
   useDeleteWorkflowMutation,
@@ -43,15 +57,19 @@ import {
   type WorkflowCondition,
   type WorkflowAction,
   type CreateWorkflowPayload,
+  type WorkflowExecutionLog,
 } from '../api/workflowsApi';
 
-// Trigger event options
-const TRIGGER_EVENTS: { value: WorkflowTriggerEvent; label: string; description: string }[] = [
-  { value: 'ticket:created', label: 'Ticket Created', description: 'When a new ticket is created' },
-  { value: 'ticket:classified', label: 'Ticket Classified', description: 'When AI classifies a ticket' },
-  { value: 'ticket:sla_warning', label: 'SLA Warning', description: 'When SLA is about to breach' },
-  { value: 'ticket:sla_breached', label: 'SLA Breached', description: 'When SLA deadline is missed' },
-  { value: 'ticket:escalated', label: 'Ticket Escalated', description: 'When a ticket is escalated' },
+// Tab types
+type TabType = 'workflows' | 'templates' | 'history';
+
+// Trigger event options with icons
+const TRIGGER_EVENTS: { value: WorkflowTriggerEvent; label: string; description: string; icon: React.ReactNode }[] = [
+  { value: 'ticket:created', label: 'Ticket Received', description: 'When a new ticket is created', icon: <Inbox className="w-5 h-5" /> },
+  { value: 'ticket:classified', label: 'Ticket Classified', description: 'When AI classifies a ticket', icon: <Tag className="w-5 h-5" /> },
+  { value: 'ticket:sla_warning', label: 'SLA Deadline Approaching', description: 'When SLA is about to breach', icon: <Clock className="w-5 h-5" /> },
+  { value: 'customer:at_risk', label: 'Customer Sentiment Drops', description: 'When sentiment score drops', icon: <TrendingUp className="w-5 h-5" /> },
+  { value: 'ticket:escalated', label: 'Ticket Reassigned', description: 'When a ticket is reassigned', icon: <ArrowUp className="w-5 h-5" /> },
 ];
 
 // Condition operators
@@ -69,45 +87,53 @@ const CONDITION_OPERATORS: { value: ConditionOperator; label: string }[] = [
 
 // Condition fields
 const CONDITION_FIELDS = [
-  { value: 'priority', label: 'Priority' },
-  { value: 'status', label: 'Status' },
-  { value: 'classification.intent', label: 'Category' },
   { value: 'customer.tier', label: 'Customer Tier' },
-  { value: 'sentiment', label: 'Sentiment' },
-  { value: 'source', label: 'Source' },
-  { value: 'sla.minutesUntilBreach', label: 'Minutes Until SLA' },
+  { value: 'priority', label: 'Priority' },
+  { value: 'classification.intent', label: 'Category' },
+  { value: 'sentiment', label: 'Sentiment Score' },
+  { value: 'assignedTo', label: 'Assigned Agent' },
+  { value: 'tags', label: 'Tags' },
+  { value: 'createdAt.hour', label: 'Time of Day' },
+  { value: 'createdAt.dayOfWeek', label: 'Day of Week' },
 ];
+
+// Template category config
+const TEMPLATE_CATEGORIES: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  routing: { label: 'Routing', icon: <Users className="w-5 h-5" />, color: 'bg-blue-100 text-blue-600' },
+  notification: { label: 'Notification', icon: <Bell className="w-5 h-5" />, color: 'bg-purple-100 text-purple-600' },
+  escalation: { label: 'Escalation', icon: <ArrowUp className="w-5 h-5" />, color: 'bg-red-100 text-red-600' },
+  automation: { label: 'Automation', icon: <Settings className="w-5 h-5" />, color: 'bg-green-100 text-green-600' },
+  sla: { label: 'SLA', icon: <Clock className="w-5 h-5" />, color: 'bg-amber-100 text-amber-600' },
+};
 
 // Action types with icons and param schemas
 const ACTION_TYPES: {
   value: WorkflowActionType;
   label: string;
   icon: React.ReactNode;
-  params: { key: string; label: string; type: 'text' | 'select'; options?: string[] }[];
+  params: { key: string; label: string; type: 'text' | 'select' | 'textarea'; options?: string[]; placeholder?: string }[];
 }[] = [
   {
     value: 'assign_agent',
     label: 'Assign Agent',
     icon: <UserPlus className="w-4 h-4" />,
     params: [
-      { key: 'agentId', label: 'Agent ID', type: 'text' },
-      { key: 'team', label: 'Or Team', type: 'text' },
+      { key: 'agentId', label: 'Agent/Queue', type: 'select', options: ['senior_queue', 'finance_queue', 'tech_queue', 'general_queue'] },
     ],
   },
   {
     value: 'add_tag',
     label: 'Add Tag',
     icon: <Tag className="w-4 h-4" />,
-    params: [{ key: 'tag', label: 'Tag Name', type: 'text' }],
+    params: [{ key: 'tag', label: 'Tag Name', type: 'text', placeholder: 'e.g., vip-priority' }],
   },
   {
     value: 'send_email',
     label: 'Send Email',
     icon: <Mail className="w-4 h-4" />,
     params: [
-      { key: 'to', label: 'To Email', type: 'text' },
-      { key: 'subject', label: 'Subject', type: 'text' },
-      { key: 'body', label: 'Body', type: 'text' },
+      { key: 'template', label: 'Template', type: 'select', options: ['ack_p1', 'sla_breach', 'escalation_notice'] },
+      { key: 'to', label: 'To', type: 'select', options: ['customer', 'manager', 'assigned_agent'] },
     ],
   },
   {
@@ -115,8 +141,7 @@ const ACTION_TYPES: {
     label: 'Notify Slack',
     icon: <MessageSquare className="w-4 h-4" />,
     params: [
-      { key: 'channel', label: 'Channel', type: 'text' },
-      { key: 'mention', label: 'Mention (optional)', type: 'text' },
+      { key: 'message', label: 'Message', type: 'textarea', placeholder: 'Use {subject}, {priority}, {customerName}' },
     ],
   },
   {
@@ -124,15 +149,32 @@ const ACTION_TYPES: {
     label: 'Call Webhook',
     icon: <Globe className="w-4 h-4" />,
     params: [
-      { key: 'url', label: 'URL', type: 'text' },
-      { key: 'method', label: 'Method', type: 'select', options: ['POST', 'PUT', 'PATCH'] },
+      { key: 'url', label: 'URL', type: 'text', placeholder: 'https://api.example.com/webhook' },
+      { key: 'method', label: 'Method', type: 'select', options: ['POST', 'GET', 'PUT'] },
     ],
+  },
+  {
+    value: 'create_ticket',
+    label: 'Create Ticket',
+    icon: <FileText className="w-4 h-4" />,
+    params: [
+      { key: 'subject', label: 'Subject', type: 'text', placeholder: 'Follow-up: {subject}' },
+      { key: 'priority', label: 'Priority', type: 'select', options: ['low', 'normal', 'high', 'urgent'] },
+    ],
+  },
+  {
+    value: 'close_ticket',
+    label: 'Close Ticket',
+    icon: <XOctagon className="w-4 h-4" />,
+    params: [{ key: 'reason', label: 'Resolution Reason', type: 'text', placeholder: 'Automatically resolved' }],
   },
   {
     value: 'escalate',
     label: 'Escalate',
     icon: <ArrowUp className="w-4 h-4" />,
-    params: [{ key: 'reason', label: 'Reason', type: 'text' }],
+    params: [
+      { key: 'priority', label: 'Priority', type: 'select', options: ['normal', 'high', 'urgent'] },
+    ],
   },
   {
     value: 'set_priority',
@@ -143,27 +185,25 @@ const ACTION_TYPES: {
     ],
   },
   {
-    value: 'close_ticket',
-    label: 'Close Ticket',
-    icon: <XOctagon className="w-4 h-4" />,
-    params: [{ key: 'reason', label: 'Reason', type: 'text' }],
-  },
-  {
     value: 'add_note',
     label: 'Add Note',
     icon: <FileText className="w-4 h-4" />,
-    params: [{ key: 'note', label: 'Note Content', type: 'text' }],
+    params: [{ key: 'note', label: 'Note Content', type: 'textarea', placeholder: 'Internal note...' }],
   },
 ];
 
 // Template icons
 const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
-  'auto-escalate-p1': <AlertTriangle className="w-6 h-6 text-red-500" />,
-  'sla-breach-notification': <Clock className="w-6 h-6 text-amber-500" />,
-  'vip-routing': <Sparkles className="w-6 h-6 text-purple-500" />,
-  'negative-feedback-alert': <MessageSquare className="w-6 h-6 text-blue-500" />,
-  'auto-close-resolved': <XOctagon className="w-6 h-6 text-gray-500" />,
-  'billing-category-routing': <Tag className="w-6 h-6 text-green-500" />,
+  'auto-acknowledge-p1': <Bell className="w-6 h-6 text-red-500" />,
+  'vip-customer-fast-track': <Sparkles className="w-6 h-6 text-purple-500" />,
+  'sla-breach-alert': <AlertTriangle className="w-6 h-6 text-amber-500" />,
+  'billing-to-finance-queue': <Tag className="w-6 h-6 text-green-500" />,
+  'negative-sentiment-escalation': <TrendingUp className="w-6 h-6 text-red-500" />,
+  'enterprise-priority-routing': <Shield className="w-6 h-6 text-blue-500" />,
+  'technical-support-routing': <Settings className="w-6 h-6 text-cyan-500" />,
+  'after-hours-auto-response': <Clock className="w-6 h-6 text-indigo-500" />,
+  'churn-risk-alert': <AlertTriangle className="w-6 h-6 text-orange-500" />,
+  'negative-feedback-followup': <MessageSquare className="w-6 h-6 text-pink-500" />,
 };
 
 function formatTimeAgo(dateString?: string): string {
@@ -178,61 +218,429 @@ function formatTimeAgo(dateString?: string): string {
   return `${days}d ago`;
 }
 
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  return `${(ms / 60000).toFixed(1)}m`;
+}
+
+function formatDateShort(dateString: string): string {
+  const date = new Date(dateString);
+  const today = new Date();
+  const isToday = date.toDateString() === today.toDateString();
+  if (isToday) return `Today ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 function getTriggerLabel(event: WorkflowTriggerEvent): string {
   return TRIGGER_EVENTS.find((e) => e.value === event)?.label || event;
 }
 
-// Template Gallery Component
-function TemplateGallery({
-  templates,
-  onSelect,
+// =============================
+// Workflow Card Component
+// =============================
+function WorkflowCard({
+  workflow,
+  onEdit,
+  onDelete,
+  onToggleActive,
 }: {
-  templates: WorkflowTemplate[];
-  onSelect: (template: WorkflowTemplate) => void;
+  workflow: Workflow;
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggleActive: () => void;
 }): React.ReactElement {
+  const conditionsSummary = workflow.conditions.length > 0
+    ? workflow.conditions
+        .slice(0, 2)
+        .map((c) => `${CONDITION_FIELDS.find((f) => f.value === c.field)?.label || c.field}=${String(c.value)}`)
+        .join(` ${workflow.conditionLogic} `)
+    : null;
+
+  const visibleActions = workflow.actions.slice(0, 3);
+  const hiddenCount = workflow.actions.length - 3;
+
   return (
-    <div className="mt-8">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Start from a Template</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {templates.map((template) => (
-          <button
-            key={template.id}
-            onClick={() => onSelect(template)}
-            className="text-left p-4 rounded-lg border border-gray-200 hover:border-cyan-400 hover:shadow-md transition-all group"
-          >
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-cyan-50">
-                {TEMPLATE_ICONS[template.id] || <Zap className="w-6 h-6 text-cyan-500" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-gray-900 group-hover:text-cyan-600">
-                  {template.name}
-                </h4>
-                <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                  {template.description}
-                </p>
-                <p className="text-xs text-gray-400 mt-2">
-                  {getTriggerLabel(template.trigger.event)} → {template.actions.length} action{template.actions.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-            </div>
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <h3 className="font-semibold text-gray-900 truncate">{workflow.name}</h3>
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleActive(); }}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            workflow.isActive ? 'bg-green-500' : 'bg-gray-300'
+          }`}
+        >
+          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            workflow.isActive ? 'translate-x-6' : 'translate-x-1'
+          }`} />
+        </button>
+      </div>
+
+      <div className="p-4 space-y-3">
+        {/* Trigger Pill */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 font-medium">When:</span>
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-cyan-50 text-cyan-700 border border-cyan-200">
+            <Zap className="w-3 h-3 mr-1" />
+            {getTriggerLabel(workflow.trigger.event)}
+          </span>
+        </div>
+
+        {/* Conditions */}
+        {conditionsSummary && (
+          <div className="flex items-start gap-2">
+            <span className="text-xs text-gray-500 font-medium flex-shrink-0">If:</span>
+            <span className="text-xs text-gray-600">{conditionsSummary}</span>
+          </div>
+        )}
+
+        {/* Actions List */}
+        <div className="space-y-1">
+          <span className="text-xs text-gray-500 font-medium">Then:</span>
+          <ol className="list-decimal list-inside text-xs text-gray-600 space-y-0.5 ml-1">
+            {visibleActions.map((action, i) => {
+              const cfg = ACTION_TYPES.find((a) => a.value === action.type);
+              return (
+                <li key={i} className="flex items-center gap-1.5">
+                  {cfg?.icon}
+                  <span>{cfg?.label || action.type}</span>
+                </li>
+              );
+            })}
+            {hiddenCount > 0 && <li className="text-gray-400">+{hiddenCount} more</li>}
+          </ol>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+        <div className="flex items-center gap-4 text-xs text-gray-500">
+          <span>Triggered {workflow.stats.triggeredCount}×</span>
+          <span>Last: {formatTimeAgo(workflow.stats.lastTriggeredAt)}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded" title="Edit">
+            <Edit2 className="w-4 h-4" />
           </button>
+          <button onClick={onDelete} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================
+// Tab 1: My Workflows
+// =============================
+function MyWorkflowsTab({
+  workflows,
+  isLoading,
+  onNewWorkflow,
+  onEditWorkflow,
+  onDeleteWorkflow,
+  onToggleActive,
+}: {
+  workflows: Workflow[];
+  isLoading: boolean;
+  onNewWorkflow: () => void;
+  onEditWorkflow: (w: Workflow) => void;
+  onDeleteWorkflow: (id: string) => void;
+  onToggleActive: (id: string) => void;
+}): React.ReactElement {
+  const activeCount = workflows.filter((w) => w.isActive).length;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (workflows.length === 0) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+        <Zap className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900">No workflows yet</h3>
+        <p className="text-gray-500 mt-1 mb-6">Start from a template below ↓</p>
+        <button
+          onClick={onNewWorkflow}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white font-medium rounded-lg hover:bg-cyan-700"
+        >
+          <Plus className="w-4 h-4" />
+          Create Workflow
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-gray-900">My Workflows</h2>
+          {activeCount > 0 && (
+            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+              {activeCount} active
+            </span>
+          )}
+        </div>
+        <button
+          onClick={onNewWorkflow}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white font-medium rounded-lg hover:bg-cyan-700"
+        >
+          <Plus className="w-4 h-4" />
+          New Workflow
+        </button>
+      </div>
+
+      {/* Workflow Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {workflows.map((w) => (
+          <WorkflowCard
+            key={w._id}
+            workflow={w}
+            onEdit={() => onEditWorkflow(w)}
+            onDelete={() => onDeleteWorkflow(w._id)}
+            onToggleActive={() => onToggleActive(w._id)}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-// Workflow Builder Form Component
+// =============================
+// Tab 2: Templates Gallery
+// =============================
+function TemplatesTab({
+  templates,
+  byCategory,
+  onSelectTemplate,
+  isCreating,
+}: {
+  templates: WorkflowTemplate[];
+  byCategory: Record<string, WorkflowTemplate[]>;
+  onSelectTemplate: (t: WorkflowTemplate) => void;
+  isCreating: boolean;
+}): React.ReactElement {
+  const categories = Object.keys(byCategory).filter((c) => byCategory[c]?.length > 0);
+
+  if (templates.length === 0) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+        <LayoutGrid className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900">No templates available</h3>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {categories.map((category) => (
+        <div key={category}>
+          <div className="flex items-center gap-2 mb-4">
+            <span className={`p-1.5 rounded-lg ${TEMPLATE_CATEGORIES[category]?.color || 'bg-gray-100 text-gray-600'}`}>
+              {TEMPLATE_CATEGORIES[category]?.icon || <Zap className="w-5 h-5" />}
+            </span>
+            <h3 className="text-lg font-semibold text-gray-900 capitalize">
+              {TEMPLATE_CATEGORIES[category]?.label || category}
+            </h3>
+            <span className="text-sm text-gray-500">({byCategory[category].length})</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {byCategory[category].map((template) => (
+              <div key={template.id} className="bg-white rounded-lg border border-gray-200 p-4 hover:border-cyan-400 hover:shadow-md transition-all">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="p-2 bg-gray-100 rounded-lg">
+                    {TEMPLATE_ICONS[template.id] || <Zap className="w-6 h-6 text-cyan-500" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900">{template.name}</h4>
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">{template.description}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1 mb-3">
+                  <span className="px-2 py-0.5 bg-cyan-50 text-cyan-700 text-xs rounded-full">
+                    {getTriggerLabel(template.trigger)}
+                  </span>
+                  {template.actions.slice(0, 2).map((a, i) => (
+                    <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                      {ACTION_TYPES.find((at) => at.value === a.type)?.label || a.type}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  onClick={() => onSelectTemplate(template)}
+                  disabled={isCreating}
+                  className="w-full px-3 py-2 bg-cyan-600 text-white text-sm font-medium rounded-lg hover:bg-cyan-700 disabled:opacity-50"
+                >
+                  {isCreating ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Use This Template'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// =============================
+// Tab 3: Execution History
+// =============================
+function ExecutionHistoryTab({ workflows }: { workflows: Workflow[] }): React.ReactElement {
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>(workflows[0]?._id || '');
+  const [days, setDays] = useState(7);
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+
+  const { data: historyData, isLoading } = useGetWorkflowHistoryQuery(
+    { id: selectedWorkflowId, days, limit: 100 },
+    { skip: !selectedWorkflowId }
+  );
+
+  const executions = historyData?.executions || [];
+
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-gray-400" />
+          <select
+            value={selectedWorkflowId}
+            onChange={(e) => setSelectedWorkflowId(e.target.value)}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+          >
+            {workflows.map((w) => (
+              <option key={w._id} value={w._id}>{w.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-gray-400" />
+          <select
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value))}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+          >
+            <option value={7}>7 days</option>
+            <option value={14}>14 days</option>
+            <option value={30}>30 days</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <div className="flex items-center justify-center h-32">
+          <Loader2 className="w-6 h-6 text-cyan-500 animate-spin" />
+        </div>
+      ) : executions.length === 0 ? (
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+          <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900">No executions yet</h3>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Workflow</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Triggered By</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Duration</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-4 py-3 w-8"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {executions.map((exec) => (
+                <React.Fragment key={exec._id}>
+                  <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => setExpandedRow(expandedRow === exec._id ? null : exec._id)}>
+                    <td className="px-4 py-3 text-sm text-gray-700">{formatDateShort(exec.createdAt)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 font-medium">{historyData?.workflowName}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{exec.triggerId?.slice(0, 8) || 'N/A'}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center text-sm text-gray-700">{exec.actionsExecuted.length}</td>
+                    <td className="px-4 py-3 text-center text-sm text-gray-500">{formatDuration(exec.durationMs)}</td>
+                    <td className="px-4 py-3 text-center">
+                      {exec.success ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+                          <CheckCircle className="w-3 h-3" /> Success
+                        </span>
+                      ) : exec.actionsExecuted.length > 0 ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full">
+                          <AlertTriangle className="w-3 h-3" /> Partial
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">
+                          <XCircle className="w-3 h-3" /> Failed
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {expandedRow === exec._id ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                    </td>
+                  </tr>
+                  {expandedRow === exec._id && (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-4 bg-gray-50">
+                        <div className="grid grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Context Data</h4>
+                            <div className="bg-white rounded border border-gray-200 p-3 max-h-48 overflow-auto">
+                              <pre className="text-xs text-gray-600 whitespace-pre-wrap">{JSON.stringify(exec.context, null, 2)}</pre>
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Actions Executed</h4>
+                            <div className="space-y-2">
+                              {exec.actionsExecuted.map((action, i) => (
+                                <div key={i} className="flex items-center gap-2 bg-white rounded border border-gray-200 px-3 py-2">
+                                  <CheckCircle className="w-4 h-4 text-green-500" />
+                                  <span className="text-sm text-gray-700">{ACTION_TYPES.find((a) => a.value === action)?.label || action}</span>
+                                </div>
+                              ))}
+                              {exec.errorMessage && (
+                                <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">{exec.errorMessage}</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================
+// Workflow Builder Form (Full Canvas)
+// =============================
 function WorkflowBuilderForm({
   workflow,
   onSave,
   onCancel,
+  onTest,
   isSaving,
 }: {
   workflow?: Workflow;
   onSave: (data: CreateWorkflowPayload, activate: boolean) => void;
   onCancel: () => void;
+  onTest: () => void;
   isSaving: boolean;
 }): React.ReactElement {
   const [name, setName] = useState(workflow?.name || '');
@@ -249,18 +657,9 @@ function WorkflowBuilderForm({
   const [actions, setActions] = useState<WorkflowAction[]>(
     workflow?.actions || [{ type: 'add_tag', params: { tag: '' }, order: 0 }]
   );
-  const [expandedSections, setExpandedSections] = useState({
-    trigger: true,
-    conditions: true,
-    actions: true,
-  });
-
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
-  };
 
   const addCondition = () => {
-    setConditions([...conditions, { field: 'priority', operator: 'equals', value: '' }]);
+    setConditions([...conditions, { field: 'customer.tier', operator: 'equals', value: '' }]);
   };
 
   const updateCondition = (index: number, updates: Partial<WorkflowCondition>) => {
@@ -275,20 +674,16 @@ function WorkflowBuilderForm({
     setActions([...actions, { type, params: {}, order: actions.length }]);
   };
 
-  const updateAction = (index: number, updates: Partial<WorkflowAction>) => {
-    setActions(actions.map((a, i) => (i === index ? { ...a, ...updates } : a)));
-  };
-
   const updateActionParam = (index: number, key: string, value: unknown) => {
-    setActions(
-      actions.map((a, i) =>
-        i === index ? { ...a, params: { ...a.params, [key]: value } } : a
-      )
-    );
+    setActions(actions.map((a, i) => (i === index ? { ...a, params: { ...a.params, [key]: value } } : a)));
   };
 
   const removeAction = (index: number) => {
     setActions(actions.filter((_, i) => i !== index).map((a, i) => ({ ...a, order: i })));
+  };
+
+  const updateActionType = (index: number, type: WorkflowActionType) => {
+    setActions(actions.map((a, i) => (i === index ? { ...a, type, params: {} } : a)));
   };
 
   const handleSave = (activate: boolean) => {
@@ -300,333 +695,238 @@ function WorkflowBuilderForm({
       toast.error('At least one action is required');
       return;
     }
-
-    onSave(
-      {
-        name: name.trim(),
-        description: description.trim() || undefined,
-        isActive: activate,
-        trigger: { event: triggerEvent },
-        conditions,
-        conditionLogic,
-        actions,
-      },
-      activate
-    );
+    onSave({
+      name: name.trim(),
+      description: description.trim() || undefined,
+      isActive: activate,
+      trigger: { event: triggerEvent },
+      conditions,
+      conditionLogic,
+      actions,
+    }, activate);
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-        <h2 className="text-lg font-medium text-gray-900">
-          {workflow ? 'Edit Workflow' : 'Create Workflow'}
-        </h2>
-        <button
-          onClick={onCancel}
-          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
-        >
+    <div className="flex flex-col h-full bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Breadcrumb Header */}
+      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <div className="flex items-center gap-2 text-sm">
+          <button onClick={onCancel} className="text-gray-500 hover:text-cyan-600">Workflows</button>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+          <span className="font-medium text-gray-900">{workflow ? workflow.name : 'New Workflow'}</span>
+        </div>
+        <button onClick={onCancel} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded">
           <X className="w-5 h-5" />
         </button>
       </div>
 
-      <div className="p-6 space-y-6">
-        {/* Name & Description */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Workflow Name *
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Auto-escalate VIP tickets"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What does this workflow do?"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            />
+      {/* Main Content - Scrollable */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        {/* Top Bar: Name, Description, AND/OR Toggle */}
+        <div className="space-y-4">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Workflow Name *"
+            className="w-full text-2xl font-semibold text-gray-900 border-0 border-b-2 border-transparent focus:border-cyan-500 focus:outline-none pb-2 bg-transparent"
+          />
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add a description..."
+            className="w-full text-gray-600 border-0 focus:outline-none bg-transparent"
+          />
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-500">Condition Logic:</span>
+            <button
+              onClick={() => setConditionLogic('AND')}
+              className={`px-3 py-1 text-sm rounded-full ${conditionLogic === 'AND' ? 'bg-cyan-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              Match ALL (AND)
+            </button>
+            <button
+              onClick={() => setConditionLogic('OR')}
+              className={`px-3 py-1 text-sm rounded-full ${conditionLogic === 'OR' ? 'bg-cyan-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              Match ANY (OR)
+            </button>
           </div>
         </div>
 
-        {/* Section 1: Trigger */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <button
-            onClick={() => toggleSection('trigger')}
-            className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-cyan-100 text-cyan-700 text-xs font-medium rounded">
-                TRIGGER
-              </span>
-              <span className="text-sm text-gray-700">When this happens...</span>
-            </div>
-            {expandedSections.trigger ? (
-              <ChevronDown className="w-5 h-5 text-gray-400" />
-            ) : (
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            )}
-          </button>
-          {expandedSections.trigger && (
-            <div className="p-4 bg-white">
-              <select
-                value={triggerEvent}
-                onChange={(e) => setTriggerEvent(e.target.value as WorkflowTriggerEvent)}
-                className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+        {/* SECTION 1: TRIGGER */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 text-sm font-bold">1</span>
+            <span className="text-lg font-semibold text-gray-900">When this happens...</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {TRIGGER_EVENTS.map((event) => (
+              <button
+                key={event.value}
+                onClick={() => setTriggerEvent(event.value)}
+                className={`p-4 rounded-lg border-2 text-left transition-all ${
+                  triggerEvent === event.value
+                    ? 'border-cyan-500 bg-cyan-50'
+                    : 'border-gray-200 hover:border-cyan-300 hover:bg-gray-50'
+                }`}
               >
-                {TRIGGER_EVENTS.map((event) => (
-                  <option key={event.value} value={event.value}>
-                    {event.label} — {event.description}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+                <div className="flex items-center justify-between mb-2">
+                  <span className={triggerEvent === event.value ? 'text-cyan-600' : 'text-gray-400'}>{event.icon}</span>
+                  {triggerEvent === event.value && <Check className="w-5 h-5 text-cyan-600" />}
+                </div>
+                <div className="text-sm font-medium text-gray-900">{event.label}</div>
+                <div className="text-xs text-gray-500 mt-1">{event.description}</div>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Section 2: Conditions */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <button
-            onClick={() => toggleSection('conditions')}
-            className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-cyan-100 text-cyan-700 text-xs font-medium rounded">
-                CONDITIONS
-              </span>
-              <span className="text-sm text-gray-700">
-                Only if these are true ({conditions.length})
-              </span>
+        {/* SECTION 2: CONDITIONS */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 text-sm font-bold">2</span>
+            <span className="text-lg font-semibold text-gray-900">Only if these conditions match...</span>
+          </div>
+          
+          {conditions.length === 0 ? (
+            <div className="bg-gray-50 rounded-lg p-4 text-center text-gray-500 text-sm border border-dashed border-gray-300">
+              No conditions — This workflow will fire for ALL matching triggers
             </div>
-            {expandedSections.conditions ? (
-              <ChevronDown className="w-5 h-5 text-gray-400" />
-            ) : (
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            )}
-          </button>
-          {expandedSections.conditions && (
-            <div className="p-4 bg-white space-y-3">
-              {/* AND/OR Toggle */}
-              {conditions.length > 1 && (
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-sm text-gray-600">Match:</span>
-                  <button
-                    onClick={() => setConditionLogic('AND')}
-                    className={`px-3 py-1 text-sm rounded-full ${
-                      conditionLogic === 'AND'
-                        ? 'bg-cyan-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    ALL (AND)
-                  </button>
-                  <button
-                    onClick={() => setConditionLogic('OR')}
-                    className={`px-3 py-1 text-sm rounded-full ${
-                      conditionLogic === 'OR'
-                        ? 'bg-cyan-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    ANY (OR)
-                  </button>
-                </div>
-              )}
-
-              {/* Condition Rows */}
+          ) : (
+            <div className="space-y-2">
               {conditions.map((condition, index) => (
                 <div key={index} className="flex items-center gap-2">
+                  {index > 0 && (
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${conditionLogic === 'AND' ? 'bg-cyan-100 text-cyan-700' : 'bg-purple-100 text-purple-700'}`}>
+                      {conditionLogic}
+                    </span>
+                  )}
                   <select
                     value={condition.field}
                     onChange={(e) => updateCondition(index, { field: e.target.value })}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
                   >
-                    {CONDITION_FIELDS.map((field) => (
-                      <option key={field.value} value={field.value}>
-                        {field.label}
-                      </option>
-                    ))}
+                    {CONDITION_FIELDS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
                   </select>
                   <select
                     value={condition.operator}
-                    onChange={(e) =>
-                      updateCondition(index, { operator: e.target.value as ConditionOperator })
-                    }
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    onChange={(e) => updateCondition(index, { operator: e.target.value as ConditionOperator })}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
                   >
-                    {CONDITION_OPERATORS.map((op) => (
-                      <option key={op.value} value={op.value}>
-                        {op.label}
-                      </option>
-                    ))}
+                    {CONDITION_OPERATORS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                   <input
                     type="text"
                     value={String(condition.value || '')}
                     onChange={(e) => updateCondition(index, { value: e.target.value })}
                     placeholder="Value"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
                   />
-                  <button
-                    onClick={() => removeCondition(index)}
-                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded"
-                  >
+                  <button onClick={() => removeCondition(index)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               ))}
-
-              <button
-                onClick={addCondition}
-                className="text-sm text-cyan-600 hover:text-cyan-700 font-medium"
-              >
-                + Add condition
-              </button>
             </div>
           )}
+          <button onClick={addCondition} className="text-sm text-cyan-600 hover:text-cyan-700 font-medium">+ Add Condition</button>
         </div>
 
-        {/* Section 3: Actions */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <button
-            onClick={() => toggleSection('actions')}
-            className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-cyan-100 text-cyan-700 text-xs font-medium rounded">
-                ACTIONS
-              </span>
-              <span className="text-sm text-gray-700">
-                Then do this... ({actions.length})
-              </span>
-            </div>
-            {expandedSections.actions ? (
-              <ChevronDown className="w-5 h-5 text-gray-400" />
-            ) : (
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            )}
-          </button>
-          {expandedSections.actions && (
-            <div className="p-4 bg-white space-y-3">
-              {actions.map((action, index) => {
-                const actionConfig = ACTION_TYPES.find((a) => a.value === action.type);
-                return (
-                  <div
-                    key={index}
-                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
-                  >
-                    <div className="p-1.5 text-gray-400 cursor-grab">
-                      <GripVertical className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 font-medium">#{index + 1}</span>
-                        <select
-                          value={action.type}
-                          onChange={(e) =>
-                            updateAction(index, {
-                              type: e.target.value as WorkflowActionType,
-                              params: {},
-                            })
-                          }
-                          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                        >
-                          {ACTION_TYPES.map((at) => (
-                            <option key={at.value} value={at.value}>
-                              {at.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      {actionConfig && (
-                        <div className="grid grid-cols-2 gap-2">
-                          {actionConfig.params.map((param) => (
-                            <div key={param.key}>
-                              <label className="block text-xs text-gray-500 mb-1">
-                                {param.label}
-                              </label>
-                              {param.type === 'select' ? (
-                                <select
-                                  value={String(action.params[param.key] || '')}
-                                  onChange={(e) =>
-                                    updateActionParam(index, param.key, e.target.value)
-                                  }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                                >
-                                  <option value="">Select...</option>
-                                  {param.options?.map((opt) => (
-                                    <option key={opt} value={opt}>
-                                      {opt}
-                                    </option>
-                                  ))}
-                                </select>
-                              ) : (
-                                <input
-                                  type="text"
-                                  value={String(action.params[param.key] || '')}
-                                  onChange={(e) =>
-                                    updateActionParam(index, param.key, e.target.value)
-                                  }
-                                  placeholder={param.label}
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                                />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => removeAction(index)}
-                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+        {/* SECTION 3: ACTIONS */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 text-sm font-bold">3</span>
+            <span className="text-lg font-semibold text-gray-900">Then do these actions...</span>
+          </div>
+          
+          <div className="space-y-3">
+            {actions.map((action, index) => {
+              const cfg = ACTION_TYPES.find((a) => a.value === action.type);
+              return (
+                <div key={index} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="p-1.5 text-gray-400 cursor-grab">
+                    <GripVertical className="w-4 h-4" />
                   </div>
-                );
-              })}
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 font-medium">#{index + 1}</span>
+                      <span className="text-gray-400">{cfg?.icon}</span>
+                      <select
+                        value={action.type}
+                        onChange={(e) => updateActionType(index, e.target.value as WorkflowActionType)}
+                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+                      >
+                        {ACTION_TYPES.map((at) => <option key={at.value} value={at.value}>{at.label}</option>)}
+                      </select>
+                    </div>
+                    {cfg && (
+                      <div className="grid grid-cols-2 gap-3">
+                        {cfg.params.map((param) => (
+                          <div key={param.key}>
+                            <label className="block text-xs text-gray-500 mb-1">{param.label}</label>
+                            {param.type === 'select' ? (
+                              <select
+                                value={String(action.params[param.key] || '')}
+                                onChange={(e) => updateActionParam(index, param.key, e.target.value)}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-cyan-500"
+                              >
+                                <option value="">Select...</option>
+                                {param.options?.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                              </select>
+                            ) : param.type === 'textarea' ? (
+                              <textarea
+                                value={String(action.params[param.key] || '')}
+                                onChange={(e) => updateActionParam(index, param.key, e.target.value)}
+                                placeholder={param.placeholder}
+                                rows={2}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-cyan-500"
+                              />
+                            ) : (
+                              <input
+                                type="text"
+                                value={String(action.params[param.key] || '')}
+                                onChange={(e) => updateActionParam(index, param.key, e.target.value)}
+                                placeholder={param.placeholder}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-cyan-500"
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={() => removeAction(index)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
 
-              {/* Add Action Dropdown */}
-              <div className="relative">
-                <select
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      addAction(e.target.value as WorkflowActionType);
-                    }
-                  }}
-                  className="text-sm text-cyan-600 font-medium bg-transparent border-none cursor-pointer focus:outline-none"
-                >
-                  <option value="">+ Add action</option>
-                  {ACTION_TYPES.map((at) => (
-                    <option key={at.value} value={at.value}>
-                      {at.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
+          {/* Add Action Dropdown */}
+          <div className="relative inline-block">
+            <select
+              value=""
+              onChange={(e) => { if (e.target.value) addAction(e.target.value as WorkflowActionType); }}
+              className="text-sm text-cyan-600 font-medium bg-transparent border border-cyan-200 rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            >
+              <option value="">+ Add Action</option>
+              {ACTION_TYPES.map((at) => <option key={at.value} value={at.value}>{at.label}</option>)}
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Sticky Bottom Action Bar */}
       <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between bg-gray-50">
         <button
-          onClick={onCancel}
-          className="px-4 py-2 text-gray-600 text-sm font-medium hover:bg-gray-100 rounded-lg"
+          onClick={onTest}
+          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100"
         >
-          Cancel
+          <FlaskConical className="w-4 h-4" />
+          Test Workflow
         </button>
         <div className="flex items-center gap-3">
           <button
@@ -634,7 +934,7 @@ function WorkflowBuilderForm({
             disabled={isSaving}
             className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-50"
           >
-            Save Draft
+            Save as Draft
           </button>
           <button
             onClick={() => handleSave(true)}
@@ -642,7 +942,7 @@ function WorkflowBuilderForm({
             className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-sm font-medium rounded-lg hover:bg-cyan-700 disabled:opacity-50"
           >
             {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-            Activate
+            Activate Workflow
           </button>
         </div>
       </div>
@@ -650,11 +950,95 @@ function WorkflowBuilderForm({
   );
 }
 
-// Main WorkflowBuilder Page
+// =============================
+// Test Modal Component
+// =============================
+function TestWorkflowModal({
+  isOpen,
+  onClose,
+  workflowId,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  workflowId?: string;
+}): React.ReactElement | null {
+  const [testWorkflow] = useTestWorkflowMutation();
+  const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState<{ wouldTrigger: boolean; actionsToRun: string[] } | null>(null);
+
+  const handleTest = async () => {
+    if (!workflowId) return;
+    setIsLoading(true);
+    try {
+      const result = await testWorkflow({ id: workflowId, context: { test: true } }).unwrap();
+      setResults({ wouldTrigger: result.wouldTrigger, actionsToRun: result.actionsToRun.map((a) => a.type) });
+    } catch {
+      toast.error('Test failed');
+    }
+    setIsLoading(false);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg w-full max-w-lg shadow-xl">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900">Test Workflow</h3>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <p className="text-sm text-gray-600">Test with last 5 tickets to see which would trigger this workflow.</p>
+          {results && (
+            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Would Trigger:</span>
+                <span className={results.wouldTrigger ? 'text-green-600' : 'text-red-600'}>
+                  {results.wouldTrigger ? 'Yes' : 'No'}
+                </span>
+              </div>
+              {results.actionsToRun.length > 0 && (
+                <div>
+                  <span className="font-medium">Actions to run:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {results.actionsToRun.map((a, i) => (
+                      <span key={i} className="px-2 py-0.5 bg-cyan-100 text-cyan-700 text-xs rounded-full">{a}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-gray-700 text-sm font-medium hover:bg-gray-100 rounded-lg">
+            Close
+          </button>
+          <button
+            onClick={handleTest}
+            disabled={isLoading || !workflowId}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-sm font-medium rounded-lg hover:bg-cyan-700 disabled:opacity-50"
+          >
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+            Run Test
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================
+// Main WorkflowBuilder Page with Tabs
+// =============================
 export function WorkflowBuilder(): React.ReactElement {
+  const [activeTab, setActiveTab] = useState<TabType>('workflows');
   const [view, setView] = useState<'list' | 'builder'>('list');
   const [editingWorkflow, setEditingWorkflow] = useState<Workflow | undefined>();
-  const [selectedTemplate, setSelectedTemplate] = useState<WorkflowTemplate | undefined>();
+  const [testModalOpen, setTestModalOpen] = useState(false);
+  const [creatingFromTemplate, setCreatingFromTemplate] = useState(false);
 
   const { data: workflowsData, isLoading: isLoadingWorkflows } = useGetWorkflowsQuery({});
   const { data: templatesData } = useGetTemplatesQuery();
@@ -667,40 +1051,35 @@ export function WorkflowBuilder(): React.ReactElement {
 
   const workflows = workflowsData?.workflows || [];
   const templates = templatesData?.templates || [];
-  const isEmpty = workflows.length === 0;
+  const byCategory = templatesData?.byCategory || {};
 
   const handleNewWorkflow = () => {
     setEditingWorkflow(undefined);
-    setSelectedTemplate(undefined);
     setView('builder');
   };
 
   const handleEditWorkflow = (workflow: Workflow) => {
     setEditingWorkflow(workflow);
-    setSelectedTemplate(undefined);
     setView('builder');
   };
 
   const handleSelectTemplate = async (template: WorkflowTemplate) => {
+    setCreatingFromTemplate(true);
     try {
-      const result = await createFromTemplate({
-        templateId: template.id,
-      }).unwrap();
+      const result = await createFromTemplate({ templateId: template.id }).unwrap();
       setEditingWorkflow(result.workflow);
       setView('builder');
       toast.success('Workflow created from template');
     } catch {
       toast.error('Failed to create from template');
     }
+    setCreatingFromTemplate(false);
   };
 
   const handleSaveWorkflow = async (data: CreateWorkflowPayload, activate: boolean) => {
     try {
       if (editingWorkflow) {
-        await updateWorkflow({
-          id: editingWorkflow._id,
-          data: { ...data, isActive: activate },
-        }).unwrap();
+        await updateWorkflow({ id: editingWorkflow._id, data: { ...data, isActive: activate } }).unwrap();
         toast.success('Workflow updated');
       } else {
         await createWorkflow({ ...data, isActive: activate }).unwrap();
@@ -714,12 +1093,12 @@ export function WorkflowBuilder(): React.ReactElement {
   };
 
   const handleDeleteWorkflow = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this workflow?')) return;
+    if (!confirm('Delete this workflow?')) return;
     try {
       await deleteWorkflow(id).unwrap();
       toast.success('Workflow deleted');
     } catch {
-      toast.error('Failed to delete workflow');
+      toast.error('Failed to delete');
     }
   };
 
@@ -727,179 +1106,121 @@ export function WorkflowBuilder(): React.ReactElement {
     try {
       await toggleActive(id).unwrap();
     } catch {
-      toast.error('Failed to toggle workflow');
+      toast.error('Failed to toggle');
     }
   };
 
   const handleCancel = () => {
     setView('list');
     setEditingWorkflow(undefined);
-    setSelectedTemplate(undefined);
   };
 
-  // Builder View
+  // Builder View (full screen)
   if (view === 'builder') {
     return (
       <div className="min-h-screen bg-gray-100 p-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto h-[calc(100vh-48px)]">
           <WorkflowBuilderForm
             workflow={editingWorkflow}
             onSave={handleSaveWorkflow}
             onCancel={handleCancel}
+            onTest={() => setTestModalOpen(true)}
             isSaving={isCreating || isUpdating}
           />
         </div>
+        <TestWorkflowModal
+          isOpen={testModalOpen}
+          onClose={() => setTestModalOpen(false)}
+          workflowId={editingWorkflow?._id}
+        />
       </div>
     );
   }
 
-  // List View
+  // List View with Tabs
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Workflow Automation</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Automate actions based on ticket events and conditions
-            </p>
-          </div>
+        {/* Page Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Workflow Automation</h1>
+          <p className="text-sm text-gray-500 mt-1">Automate actions based on ticket events and conditions</p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-1 mb-6 border-b border-gray-200">
           <button
-            onClick={handleNewWorkflow}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white font-medium rounded-lg hover:bg-cyan-700"
+            onClick={() => setActiveTab('workflows')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === 'workflows'
+                ? 'border-cyan-500 text-cyan-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
           >
-            <Plus className="w-4 h-4" />
-            New Workflow
+            <span className="inline-flex items-center gap-2">
+              <List className="w-4 h-4" />
+              My Workflows
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('templates')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === 'templates'
+                ? 'border-cyan-500 text-cyan-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <span className="inline-flex items-center gap-2">
+              <LayoutGrid className="w-4 h-4" />
+              Templates
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === 'history'
+                ? 'border-cyan-500 text-cyan-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <span className="inline-flex items-center gap-2">
+              <History className="w-4 h-4" />
+              Execution History
+            </span>
           </button>
         </div>
 
-        {/* Loading State */}
-        {isLoadingWorkflows && (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
-          </div>
+        {/* Tab Content */}
+        {activeTab === 'workflows' && (
+          <MyWorkflowsTab
+            workflows={workflows}
+            isLoading={isLoadingWorkflows}
+            onNewWorkflow={handleNewWorkflow}
+            onEditWorkflow={handleEditWorkflow}
+            onDeleteWorkflow={handleDeleteWorkflow}
+            onToggleActive={handleToggleActive}
+          />
         )}
 
-        {/* Empty State with Templates */}
-        {!isLoadingWorkflows && isEmpty && (
-          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-            <Zap className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900">No workflows yet</h3>
-            <p className="text-gray-500 mt-1 mb-6">
-              Create your first workflow to automate repetitive tasks
-            </p>
-            <button
-              onClick={handleNewWorkflow}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white font-medium rounded-lg hover:bg-cyan-700"
-            >
-              <Plus className="w-4 h-4" />
-              Create Workflow
-            </button>
-
-            {templates.length > 0 && (
-              <TemplateGallery templates={templates} onSelect={handleSelectTemplate} />
-            )}
-          </div>
+        {activeTab === 'templates' && (
+          <TemplatesTab
+            templates={templates}
+            byCategory={byCategory}
+            onSelectTemplate={handleSelectTemplate}
+            isCreating={creatingFromTemplate}
+          />
         )}
 
-        {/* Workflow Table */}
-        {!isLoadingWorkflows && !isEmpty && (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Name
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Trigger
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                    Triggered
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                    Last Run
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {workflows.map((workflow) => (
-                  <tr key={workflow._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <div>
-                        <span className="font-medium text-gray-900">{workflow.name}</span>
-                        {workflow.description && (
-                          <p className="text-xs text-gray-500 mt-0.5 truncate max-w-xs">
-                            {workflow.description}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
-                        <Zap className="w-3 h-3 mr-1" />
-                        {getTriggerLabel(workflow.trigger.event)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => handleToggleActive(workflow._id)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          workflow.isActive ? 'bg-cyan-600' : 'bg-gray-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            workflow.isActive ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="text-sm text-gray-700">
-                        {workflow.stats.triggeredCount}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="text-sm text-gray-500">
-                        {formatTimeAgo(workflow.stats.lastTriggeredAt)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleEditWorkflow(workflow)}
-                          className="p-1.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteWorkflow(workflow._id)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Templates Section (shown even when workflows exist) */}
-        {!isLoadingWorkflows && !isEmpty && templates.length > 0 && (
-          <TemplateGallery templates={templates} onSelect={handleSelectTemplate} />
+        {activeTab === 'history' && (
+          workflows.length > 0 ? (
+            <ExecutionHistoryTab workflows={workflows} />
+          ) : (
+            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+              <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">No workflows to show history for</h3>
+              <p className="text-gray-500 mt-1">Create a workflow first to see execution history</p>
+            </div>
+          )
         )}
       </div>
     </div>

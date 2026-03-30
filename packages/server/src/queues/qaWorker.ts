@@ -3,12 +3,14 @@ import { z } from 'zod';
 import OpenAI from 'openai';
 import mongoose from 'mongoose';
 import { env } from '../config/env.js';
-import { QUEUES } from '../config/constants.js';
+import { QUEUES, REDIS_TTL } from '../config/constants.js';
 import { logger } from '../config/logger.js';
-import { Company, type QARubric } from '../models/Company.js';
+import { redis, buildRedisKey } from '../config/redis.js';
 import { CallSession } from '../models/CallSession.js';
 import { Ticket } from '../models/Ticket.js';
 import { QAReport, type QADimensionScore } from '../models/QAReport.js';
+import { QARubric, DEFAULT_QA_RUBRIC, type IQARubricDimension } from '../models/QARubric.js';
+import { updateAgentMetrics } from '../services/agentPerformance.js';
 
 const childLogger = logger.child({ worker: 'qa-scoring' });
 
@@ -35,63 +37,19 @@ const QAJobDataSchema = z.object({
 
 export type QAJobData = z.infer<typeof QAJobDataSchema>;
 
-// GPT-4o output schema
-const QARubricOutputSchema = z.object({
-  intentUnderstanding: z.object({
-    score: z.number().min(0).max(10),
-    reasoning: z.string(),
-  }),
-  responseAccuracy: z.object({
-    score: z.number().min(0).max(10),
-    reasoning: z.string(),
-  }),
-  resolutionSuccess: z.object({
-    score: z.number().min(0).max(10),
-    reasoning: z.string(),
-  }),
-  escalationCorrectness: z.object({
-    score: z.number().min(0).max(10),
-    reasoning: z.string(),
-  }),
-  customerExperience: z.object({
-    score: z.number().min(0).max(10),
-    reasoning: z.string(),
-  }),
-});
+// GPT-4o output schema — built dynamically from rubric dimensions
+function buildOutputSchema(dimensions: IQARubricDimension[]) {
+  const shape: Record<string, z.ZodTypeAny> = {};
+  for (const dim of dimensions) {
+    shape[dim.key] = z.object({
+      score: z.number().min(0).max(10),
+      reasoning: z.string(),
+    });
+  }
+  return z.object(shape);
+}
 
-type QARubricOutput = z.infer<typeof QARubricOutputSchema>;
-
-// Default QA rubric thresholds
-const DEFAULT_RUBRIC: QARubric = {
-  intentUnderstanding: { minPassScore: 6, weight: 0.20 },
-  responseAccuracy: { minPassScore: 7, weight: 0.25 },
-  resolutionSuccess: { minPassScore: 6, weight: 0.25 },
-  escalationCorrectness: { minPassScore: 7, weight: 0.15 },
-  customerExperience: { minPassScore: 6, weight: 0.15 },
-};
-
-// System prompt for QA evaluation
-const QA_SYSTEM_PROMPT = `You are a customer support quality analyst. Score this interaction on 5 dimensions.
-
-For each dimension, provide:
-- score: 0-10 (where 0 is terrible, 5 is acceptable, 10 is excellent)
-- reasoning: 1 sentence explaining the score
-
-Dimensions to evaluate:
-1. intentUnderstanding: Did the AI correctly identify what the customer wanted?
-2. responseAccuracy: Was the information provided accurate and relevant?
-3. resolutionSuccess: Was the customer's issue actually resolved?
-4. escalationCorrectness: Was escalation handled appropriately (escalated when needed, not escalated unnecessarily)?
-5. customerExperience: Was the overall interaction professional, empathetic, and efficient?
-
-Return ONLY valid JSON matching this exact structure:
-{
-  "intentUnderstanding": { "score": <number>, "reasoning": "<string>" },
-  "responseAccuracy": { "score": <number>, "reasoning": "<string>" },
-  "resolutionSuccess": { "score": <number>, "reasoning": "<string>" },
-  "escalationCorrectness": { "score": <number>, "reasoning": "<string>" },
-  "customerExperience": { "score": <number>, "reasoning": "<string>" }
-}`;
+type DimensionScoreMap = Record<string, { score: number; reasoning: string }>;
 
 // Socket.IO instance (set during server startup)
 let socketIO: { to: (room: string) => { emit: (event: string, data: unknown) => void } } | null = null;
@@ -101,6 +59,46 @@ let socketIO: { to: (room: string) => { emit: (event: string, data: unknown) => 
  */
 export function setQASocketIO(io: typeof socketIO): void {
   socketIO = io;
+}
+
+/**
+ * Fetch QA rubric for a company with Redis caching.
+ * Priority: Redis cache → MongoDB QARubric collection → DEFAULT_QA_RUBRIC
+ */
+async function fetchQARubric(companyId: string): Promise<IQARubricDimension[]> {
+  const cacheKey = buildRedisKey(companyId, 'qa', 'rubric');
+
+  // 1. Check Redis cache
+  try {
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      childLogger.debug({ companyId }, 'QA rubric loaded from cache');
+      return JSON.parse(cached) as IQARubricDimension[];
+    }
+  } catch (error) {
+    childLogger.warn({ error, companyId }, 'Failed to read rubric from Redis cache');
+  }
+
+  // 2. Check MongoDB
+  const rubricDoc = await QARubric.findOne({
+    companyId: new mongoose.Types.ObjectId(companyId),
+  }).lean();
+
+  const dimensions: IQARubricDimension[] = rubricDoc?.dimensions ?? DEFAULT_QA_RUBRIC;
+
+  // 3. Cache and return
+  try {
+    await redis.set(cacheKey, JSON.stringify(dimensions), 'EX', REDIS_TTL.QA_RUBRIC_CACHE);
+  } catch (error) {
+    childLogger.warn({ error, companyId }, 'Failed to cache rubric in Redis');
+  }
+
+  childLogger.info(
+    { companyId, source: rubricDoc ? 'mongodb' : 'default' },
+    'QA rubric loaded'
+  );
+
+  return dimensions;
 }
 
 /**
@@ -132,15 +130,44 @@ function buildTextTranscript(
 }
 
 /**
- * Evaluate interaction using GPT-4o
+ * Build dynamic system prompt from rubric dimensions
  */
-async function evaluateWithGPT(channel: string, transcript: string): Promise<QARubricOutput> {
+function buildSystemPrompt(dimensions: IQARubricDimension[]): string {
+  const rubricBlock = dimensions
+    .map((d) => `${d.key}: ${d.scoringGuide}`)
+    .join('\n');
+
+  const dimensionKeys = dimensions.map((d) => d.key);
+  const jsonExample = dimensionKeys
+    .map((key) => `  "${key}": { "score": <number>, "reasoning": "<string max 15 words>" }`)
+    .join(',\n');
+
+  return `Score this customer support interaction on each dimension.
+Rubric:
+${rubricBlock}
+For each dimension return: score (0-10) and reasoning (max 15 words).
+Return ONLY JSON:
+{
+${jsonExample}
+}`;
+}
+
+/**
+ * Evaluate interaction using GPT-4o with dynamic rubric
+ */
+async function evaluateWithGPT(
+  channel: string,
+  transcript: string,
+  dimensions: IQARubricDimension[]
+): Promise<DimensionScoreMap> {
+  const systemPrompt = buildSystemPrompt(dimensions);
+
   const response = await openai.chat.completions.create({
     model: 'gpt-4o',
     temperature: 0,
     response_format: { type: 'json_object' },
     messages: [
-      { role: 'system', content: QA_SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       { role: 'user', content: `Channel: ${channel}\n\nTranscript:\n${transcript}` },
     ],
   });
@@ -151,83 +178,85 @@ async function evaluateWithGPT(channel: string, transcript: string): Promise<QAR
   }
 
   const parsed = JSON.parse(content);
-  return QARubricOutputSchema.parse(parsed);
+  const schema = buildOutputSchema(dimensions);
+  return schema.parse(parsed) as DimensionScoreMap;
 }
 
 /**
- * Calculate weighted overall score
+ * Calculate weighted overall score from dynamic dimensions
  */
-function calculateOverallScore(scores: QARubricOutput, rubric: QARubric): number {
-  const overall =
-    scores.intentUnderstanding.score * rubric.intentUnderstanding.weight +
-    scores.responseAccuracy.score * rubric.responseAccuracy.weight +
-    scores.resolutionSuccess.score * rubric.resolutionSuccess.weight +
-    scores.escalationCorrectness.score * rubric.escalationCorrectness.weight +
-    scores.customerExperience.score * rubric.customerExperience.weight;
-
+function calculateOverallScore(
+  scores: DimensionScoreMap,
+  dimensions: IQARubricDimension[]
+): number {
+  let overall = 0;
+  for (const dim of dimensions) {
+    const dimScore = scores[dim.key];
+    if (dimScore) {
+      overall += dimScore.score * dim.weight;
+    }
+  }
   // Convert from 0-10 to 0-100 scale
   return Math.round(overall * 10);
 }
 
 /**
- * Identify flagged dimensions (below minPassScore)
+ * Identify flagged dimensions (score < minPassScore)
  */
-function identifyFlaggedDimensions(scores: QARubricOutput, rubric: QARubric): string[] {
+function identifyFlaggedDimensions(
+  scores: DimensionScoreMap,
+  dimensions: IQARubricDimension[]
+): string[] {
   const flagged: string[] = [];
-
-  if (scores.intentUnderstanding.score < rubric.intentUnderstanding.minPassScore) {
-    flagged.push('intentUnderstanding');
+  for (const dim of dimensions) {
+    const dimScore = scores[dim.key];
+    if (dimScore && dimScore.score < dim.minPassScore) {
+      flagged.push(dim.key);
+    }
   }
-  if (scores.responseAccuracy.score < rubric.responseAccuracy.minPassScore) {
-    flagged.push('responseAccuracy');
-  }
-  if (scores.resolutionSuccess.score < rubric.resolutionSuccess.minPassScore) {
-    flagged.push('resolutionSuccess');
-  }
-  if (scores.escalationCorrectness.score < rubric.escalationCorrectness.minPassScore) {
-    flagged.push('escalationCorrectness');
-  }
-  if (scores.customerExperience.score < rubric.customerExperience.minPassScore) {
-    flagged.push('customerExperience');
-  }
-
   return flagged;
 }
 
 /**
- * Build dimension scores with weights
+ * Build dimension scores record with weights for QAReport storage
  */
 function buildDimensionScores(
-  scores: QARubricOutput,
-  rubric: QARubric
+  scores: DimensionScoreMap,
+  dimensions: IQARubricDimension[]
 ): Record<string, QADimensionScore> {
-  return {
-    intentUnderstanding: {
-      score: scores.intentUnderstanding.score,
-      reasoning: scores.intentUnderstanding.reasoning,
-      weight: rubric.intentUnderstanding.weight,
-    },
-    responseAccuracy: {
-      score: scores.responseAccuracy.score,
-      reasoning: scores.responseAccuracy.reasoning,
-      weight: rubric.responseAccuracy.weight,
-    },
-    resolutionSuccess: {
-      score: scores.resolutionSuccess.score,
-      reasoning: scores.resolutionSuccess.reasoning,
-      weight: rubric.resolutionSuccess.weight,
-    },
-    escalationCorrectness: {
-      score: scores.escalationCorrectness.score,
-      reasoning: scores.escalationCorrectness.reasoning,
-      weight: rubric.escalationCorrectness.weight,
-    },
-    customerExperience: {
-      score: scores.customerExperience.score,
-      reasoning: scores.customerExperience.reasoning,
-      weight: rubric.customerExperience.weight,
-    },
-  };
+  const result: Record<string, QADimensionScore> = {};
+  for (const dim of dimensions) {
+    const dimScore = scores[dim.key];
+    if (dimScore) {
+      result[dim.key] = {
+        score: dimScore.score,
+        reasoning: dimScore.reasoning,
+        weight: dim.weight,
+      };
+    }
+  }
+  return result;
+}
+
+/**
+ * Extract agent ID from interaction depending on channel
+ */
+async function extractAgentId(
+  channel: 'voice' | 'text',
+  interactionId: string,
+  companyId: string
+): Promise<string | null> {
+  if (channel === 'text') {
+    const ticket = await Ticket.findOne({
+      _id: interactionId,
+      companyId,
+    })
+      .select('assignedTo')
+      .lean();
+    return ticket?.assignedTo || null;
+  }
+  // Voice channel: no direct agent assignment in standard flow
+  return null;
 }
 
 /**
@@ -238,13 +267,8 @@ async function processQAJob(job: Job<QAJobData>): Promise<void> {
 
   childLogger.info({ interactionId, companyId, channel, jobId: job.id }, 'Processing QA job');
 
-  // Step a: Fetch company QA rubric config
-  const company = await Company.findById(companyId).select('qaRubric').lean();
-  if (!company) {
-    throw new Error(`Company not found: ${companyId}`);
-  }
-
-  const rubric: QARubric = company.qaRubric || DEFAULT_RUBRIC;
+  // Step a: Fetch interaction-specific QA rubric (Redis-cached)
+  const dimensions = await fetchQARubric(companyId);
 
   // Step b: Fetch transcript
   let transcript: string;
@@ -285,20 +309,20 @@ async function processQAJob(job: Job<QAJobData>): Promise<void> {
     throw new Error('Insufficient content for QA evaluation');
   }
 
-  // Step c-f: GPT-4o evaluation with Zod validation
-  const scores = await evaluateWithGPT(channel, transcript);
+  // Step c: GPT-4o evaluation with dynamic rubric
+  const scores = await evaluateWithGPT(channel, transcript, dimensions);
 
-  // Step g: Calculate weighted overall score
-  const overallScore = calculateOverallScore(scores, rubric);
+  // Step d: Calculate weighted overall score
+  const overallScore = calculateOverallScore(scores, dimensions);
 
-  // Step h: Identify flagged dimensions
-  const flaggedDimensions = identifyFlaggedDimensions(scores, rubric);
+  // Step e: Identify flagged dimensions
+  const flaggedDimensions = identifyFlaggedDimensions(scores, dimensions);
   const flaggedForReview = flaggedDimensions.length > 0;
 
   // Build dimension scores with weights
-  const dimensions = buildDimensionScores(scores, rubric);
+  const dimensionScores = buildDimensionScores(scores, dimensions);
 
-  // Step i: Create QAReport in MongoDB
+  // Step f: Create QAReport in MongoDB
   const companyObjectId = new mongoose.Types.ObjectId(companyId);
 
   const qaReport = await QAReport.findOneAndUpdate(
@@ -308,14 +332,14 @@ async function processQAJob(job: Job<QAJobData>): Promise<void> {
       interactionId,
       channel,
       overallScore,
-      dimensions,
+      dimensions: dimensionScores,
       flaggedForReview,
       flaggedDimensions,
     },
     { upsert: true, new: true }
   );
 
-  // Step j: Update CallSession or Ticket with qaScore
+  // Step g: Update CallSession or Ticket with qaScore
   if (channel === 'voice') {
     await CallSession.findOneAndUpdate(
       { callId: interactionId, companyId },
@@ -325,7 +349,13 @@ async function processQAJob(job: Job<QAJobData>): Promise<void> {
     await Ticket.findByIdAndUpdate(interactionId, { qaScore: overallScore });
   }
 
-  // Step k-l: If flagged, emit Socket.io alert to supervisors
+  // Step h: Update agent performance aggregation
+  const agentId = await extractAgentId(channel, interactionId, companyId);
+  if (agentId) {
+    await updateAgentMetrics(agentId, companyId, overallScore, interactionId, channel);
+  }
+
+  // Emit Socket.io alert to supervisors
   if (socketIO) {
     socketIO.to(`company:${companyId}:supervisors`).emit('qa:scored', {
       interactionId,
@@ -345,6 +375,7 @@ async function processQAJob(job: Job<QAJobData>): Promise<void> {
       overallScore,
       flaggedForReview,
       flaggedDimensions,
+      agentId,
     },
     'QA scoring completed'
   );

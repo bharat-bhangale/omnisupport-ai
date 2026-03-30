@@ -179,3 +179,15 @@ export function getMinutesUntilBreach(ticket: ITicket): number {
   }
   return Math.floor(timeMs / 60000);
 }
+
+/**
+ * Get minutes until breach (positive) or minutes past breach (negative).
+ * Unlike getMinutesUntilBreach, this returns negative values for overdue tickets.
+ */
+export function getTimeToBreachMinutes(ticket: ITicket): number {
+  const timeMs = getTimeToBreachMs(ticket);
+  if (timeMs === null) {
+    return 0;
+  }
+  return Math.floor(timeMs / 60000);
+}

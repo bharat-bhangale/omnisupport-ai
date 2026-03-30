@@ -6,8 +6,10 @@ import { env } from '../config/env.js';
 import { QUEUES } from '../config/constants.js';
 import { logger } from '../config/logger.js';
 import { Workflow, type IWorkflow, type WorkflowAction, type ConditionOperator } from '../models/Workflow.js';
+import { WorkflowExecutionLog } from '../models/WorkflowExecutionLog.js';
 import { Ticket } from '../models/Ticket.js';
 import { classificationQueue } from './index.js';
+import { getEmailTemplate, interpolateEmailTemplate } from '../config/emailTemplates.js';
 
 const childLogger = logger.child({ worker: 'workflow' });
 
@@ -235,24 +237,73 @@ const actionHandlers: Record<
 
   /**
    * Send email via SendGrid
+   * Supports both template-based and direct email sending
    */
   async send_email(params, context, companyId) {
     if (!env.SENDGRID_API_KEY) {
       throw new Error('SendGrid not configured');
     }
 
-    const to = params.to as string;
-    const subject = params.subject as string || 'Workflow Notification';
-    const body = params.body as string || `Workflow triggered for ticket ${context.ticketId}`;
+    const templateId = params.template as string;
+    const toParam = params.to as string;
+    
+    // Resolve recipient
+    let to: string;
+    if (toParam === 'customer') {
+      to = (context.customer as Record<string, unknown>)?.email as string || context.customerEmail as string;
+      if (!to) throw new Error('No customer email available');
+    } else if (toParam === 'manager') {
+      // In real implementation, would fetch from company config
+      to = context.managerEmail as string || 'manager@company.com';
+    } else {
+      to = toParam;
+    }
 
-    await sgMail.send({
-      to,
-      from: 'noreply@omnisupport.ai',
-      subject: interpolateTemplate(subject, context),
-      text: interpolateTemplate(body, context),
-    });
+    let subject: string;
+    let body: string;
 
-    childLogger.info({ to, subject }, 'Email sent via workflow');
+    // Use template if specified
+    if (templateId) {
+      const template = getEmailTemplate(templateId);
+      if (!template) {
+        throw new Error(`Email template not found: ${templateId}`);
+      }
+
+      // Build variables from context
+      const variables = {
+        ...context,
+        ticketId: context.ticketId,
+        customerName: (context.customer as Record<string, unknown>)?.name || 'Valued Customer',
+        ticketUrl: `${env.APP_URL || 'https://app.omnisupport.ai'}/tickets/${context.ticketId}`,
+        createdAt: new Date().toISOString(),
+        slaDeadline: (context.sla as Record<string, unknown>)?.responseDeadline || 'N/A',
+        escalationReason: (context.escalation as Record<string, unknown>)?.reason || 'Manual escalation',
+      };
+
+      subject = interpolateEmailTemplate(template.subject, variables);
+      body = interpolateEmailTemplate(template.bodyHtml, variables);
+
+      await sgMail.send({
+        to,
+        from: env.SENDGRID_FROM_EMAIL || 'noreply@omnisupport.ai',
+        subject,
+        html: body,
+        text: interpolateEmailTemplate(template.bodyText, variables),
+      });
+    } else {
+      // Direct email (no template)
+      subject = params.subject as string || 'Workflow Notification';
+      body = params.body as string || `Workflow triggered for ticket ${context.ticketId}`;
+
+      await sgMail.send({
+        to,
+        from: env.SENDGRID_FROM_EMAIL || 'noreply@omnisupport.ai',
+        subject: interpolateTemplate(subject, context),
+        text: interpolateTemplate(body, context),
+      });
+    }
+
+    childLogger.info({ to, templateId, subject }, 'Email sent via workflow');
   },
 
   /**
@@ -524,6 +575,7 @@ async function processWorkflowJob(job: Job<WorkflowJobData>): Promise<WorkflowJo
 
     // Sort and execute actions in order
     const sortedActions = [...workflow.actions].sort((a, b) => a.order - b.order);
+    const executedActionTypes: string[] = [];
 
     for (const action of sortedActions) {
       try {
@@ -534,6 +586,7 @@ async function processWorkflowJob(job: Job<WorkflowJobData>): Promise<WorkflowJo
 
         await handler(action.params, context, companyId);
         actionsExecuted++;
+        executedActionTypes.push(action.type);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         errors.push(`Action ${action.type}: ${errorMessage}`);
@@ -563,6 +616,18 @@ async function processWorkflowJob(job: Job<WorkflowJobData>): Promise<WorkflowJo
 
     const processingTimeMs = Date.now() - startTime;
 
+    // Log execution to WorkflowExecutionLog
+    await WorkflowExecutionLog.create({
+      workflowId,
+      companyId,
+      triggerId,
+      context,
+      actionsExecuted: executedActionTypes,
+      success: errors.length === 0,
+      errorMessage: errors.length > 0 ? errors.join('; ') : undefined,
+      durationMs: processingTimeMs,
+    });
+
     childLogger.info(
       {
         workflowId,
@@ -584,6 +649,22 @@ async function processWorkflowJob(job: Job<WorkflowJobData>): Promise<WorkflowJo
     };
   } catch (error) {
     const processingTimeMs = Date.now() - startTime;
+
+    // Log failed execution
+    try {
+      await WorkflowExecutionLog.create({
+        workflowId,
+        companyId,
+        triggerId,
+        context,
+        actionsExecuted: [],
+        success: false,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        durationMs: processingTimeMs,
+      });
+    } catch (logError) {
+      childLogger.error({ logError }, 'Failed to log workflow execution');
+    }
     
     childLogger.error(
       { error, workflowId, triggerId, jobId: job.id, processingTimeMs },

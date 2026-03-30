@@ -19,6 +19,7 @@ import classificationWorker from './queues/classificationWorker.js';
 import responseWorker from './queues/responseWorker.js';
 import workflowExecutor from './queues/workflowExecutor.js';
 import slaMonitorWorker, { scheduleSLAMonitor } from './queues/slaMonitorWorker.js';
+import qaWorker from './queues/qaWorker.js';
 
 const childLogger = logger.child({ service: 'workers' });
 
@@ -28,10 +29,11 @@ const workers: Worker[] = [
   responseWorker,
   workflowExecutor,
   slaMonitorWorker,
+  qaWorker,
 ];
 
 // Track unimplemented workers (stubs for future implementation)
-const STUB_WORKERS = ['summary', 'qa', 'kb-index', 'learning', 'sentiment'];
+const STUB_WORKERS = ['summary', 'kb-index', 'learning', 'sentiment'];
 
 /**
  * Create stub worker that logs jobs
