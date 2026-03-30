@@ -4,9 +4,11 @@ import { env } from '../config/env.js';
 import { QUEUES } from '../config/constants.js';
 import { logger } from '../config/logger.js';
 import { Ticket, type ITicket } from '../models/Ticket.js';
+import { SLABreachRecord } from '../models/SLABreachRecord.js';
 import { slaMonitorQueue } from './index.js';
-import { triggerWorkflows } from '../services/workflowTrigger.js';
-import { getSLAStatus, getTimeToBreachMs, getMinutesUntilBreach } from '../services/slaCalculator.js';
+import { triggerOnSLABreach } from '../services/workflowTrigger.js';
+import { getTimeToBreachMs, getMinutesUntilBreach, getTimeToBreachMinutes } from '../services/slaCalculator.js';
+import { sendSLABreachNotification } from '../services/slackNotifier.js';
 
 const childLogger = logger.child({ worker: 'slaMonitor' });
 
@@ -37,7 +39,7 @@ export function initSLAMonitorWorker(
 }
 
 /**
- * Emit SLA event to company room
+ * Emit SLA event to company room with priority-based sound hint
  */
 function emitToCompany(
   companyId: string,
@@ -52,6 +54,21 @@ function emitToCompany(
 }
 
 /**
+ * Get beep count for priority-based sound alerts
+ * P1 breach: 3 rapid beeps | P2 breach: 2 beeps | P3: 1 beep | P4: 1 beep
+ */
+function getAlertBeeps(priority: string): number {
+  switch (priority) {
+    case 'urgent':
+      return 3;
+    case 'high':
+      return 2;
+    default:
+      return 1;
+  }
+}
+
+/**
  * Company interface for SLA check
  */
 interface ActiveCompany {
@@ -60,27 +77,23 @@ interface ActiveCompany {
 }
 
 /**
- * Get list of active companies
- * Note: In production, this would query the Company model
- * For now, we'll get unique companyIds from tickets
+ * Get list of active companies from open tickets
  */
 async function getActiveCompanies(): Promise<ActiveCompany[]> {
-  // Get distinct company IDs from open tickets
   const companyIds = await Ticket.distinct('companyId', {
     status: { $in: ['new', 'open', 'pending'] },
   });
 
-  return companyIds.map((id) => ({
-    _id: id as mongoose.Types.ObjectId,
+  return companyIds.map((id: mongoose.Types.ObjectId) => ({
+    _id: id,
     name: `Company-${id}`,
   }));
 }
 
 /**
- * Find the least loaded agent for auto-assignment
+ * Find the least loaded senior agent for auto-assignment
  */
 async function findLeastLoadedAgent(companyId: mongoose.Types.ObjectId): Promise<string | null> {
-  // Get agent workload counts
   const agentWorkloads = await Ticket.aggregate([
     {
       $match: {
@@ -103,19 +116,7 @@ async function findLeastLoadedAgent(companyId: mongoose.Types.ObjectId): Promise
     return agentWorkloads[0]._id as string;
   }
 
-  // No assigned agents found, return null
   return null;
-}
-
-/**
- * Sync ticket priority to external helpdesk (Zendesk/Freshdesk)
- */
-async function syncToHelpdeskUrgent(ticket: ITicket): Promise<void> {
-  // TODO: Implement actual sync via IntegrationOrchestrator
-  childLogger.info(
-    { ticketId: ticket._id, source: ticket.source, externalId: ticket.externalId },
-    'Would sync ticket priority to urgent in external helpdesk'
-  );
 }
 
 /**
@@ -123,11 +124,11 @@ async function syncToHelpdeskUrgent(ticket: ITicket): Promise<void> {
  */
 async function processCompanySLA(company: ActiveCompany): Promise<{
   breached: number;
-  warned: number;
-  noticed: number;
+  critical: number;
+  warning: number;
 }> {
   const companyId = company._id;
-  const stats = { breached: 0, warned: 0, noticed: 0 };
+  const stats = { breached: 0, critical: 0, warning: 0 };
 
   // Fetch open tickets with SLA deadline that haven't been flagged as breached
   const tickets = await Ticket.find({
@@ -137,70 +138,112 @@ async function processCompanySLA(company: ActiveCompany): Promise<{
     'sla.responseDeadline': { $exists: true },
   }).lean();
 
+  const companyIdStr = companyId.toString();
+
   for (const ticket of tickets) {
-    const timeToBreachMs = getTimeToBreachMs(ticket as ITicket);
+    const timeToBreachMs = getTimeToBreachMs(ticket as unknown as ITicket);
     if (timeToBreachMs === null) continue;
 
     const ticketId = ticket._id.toString();
-    const companyIdStr = companyId.toString();
+    const minutesLeft = getTimeToBreachMinutes(ticket as unknown as ITicket);
 
-    // Check SLA status
     if (timeToBreachMs <= 0) {
-      // BREACHED - not flagged yet
+      // ──── BREACHED ────────────────────────────────────────────────
       stats.breached++;
+      const minutesOverdue = Math.abs(minutesLeft);
 
-      // Update ticket
+      // 1. Update ticket: slaBreach=true, slaBreachedAt
       await Ticket.updateOne(
         { _id: ticket._id },
-        { $set: { 'sla.isBreached': true } }
-      );
-
-      // Sync to external helpdesk
-      await syncToHelpdeskUrgent(ticket as ITicket);
-
-      // Trigger workflows
-      await triggerWorkflows(
-        'sla_breach',
         {
-          ticketId,
-          priority: ticket.priority,
-          classification: ticket.classification,
-          subject: ticket.subject,
-          sla: {
-            responseDeadline: ticket.sla?.responseDeadline?.toISOString(),
-            isBreached: true,
+          $set: {
+            'sla.isBreached': true,
           },
-        },
-        companyIdStr
+        }
       );
 
-      // Emit socket event
+      // 2. Create SLABreachRecord in MongoDB
+      try {
+        await SLABreachRecord.findOneAndUpdate(
+          { companyId, ticketId: ticket._id },
+          {
+            companyId,
+            ticketId: ticket._id,
+            externalId: ticket.externalId,
+            priority: ticket.priority,
+            category: ticket.classification?.categories?.[0] || undefined,
+            slaDeadline: ticket.sla!.responseDeadline,
+            breachedAt: new Date(),
+            breachDurationMinutes: minutesOverdue,
+            assignedAgent: ticket.assignedTo || undefined,
+          },
+          { upsert: true, new: true }
+        );
+      } catch (error) {
+        childLogger.error(
+          { error, ticketId, companyId: companyIdStr },
+          'Failed to create SLABreachRecord'
+        );
+      }
+
+      // 3. Trigger workflows
+      await triggerOnSLABreach(
+        ticketId,
+        companyIdStr,
+        {
+          responseDeadline: ticket.sla?.responseDeadline?.toISOString(),
+          isBreached: true,
+          minutesUntilBreach: -minutesOverdue,
+        },
+        {
+          subject: ticket.subject,
+          priority: ticket.priority,
+        }
+      );
+
+      // 4. Socket.io: emit 'sla:breached' with full ticket context + beep count
       emitToCompany(companyIdStr, 'sla:breached', {
         ticketId,
         subject: ticket.subject,
         priority: ticket.priority,
-        breachedAt: new Date().toISOString(),
+        minutesOverdue,
+        assignedAgent: ticket.assignedTo || null,
+        externalId: ticket.externalId,
+        alertBeeps: getAlertBeeps(ticket.priority),
       });
 
-      childLogger.warn(
-        { ticketId, priority: ticket.priority },
-        'SLA breached for ticket'
-      );
-    } else if (timeToBreachMs <= 1800000) {
-      // WARNING - less than 30 minutes
-      stats.warned++;
-
-      const minutesLeft = getMinutesUntilBreach(ticket as ITicket);
-
-      // Emit socket event
-      emitToCompany(companyIdStr, 'sla:warning', {
+      // 5. Slack notification
+      sendSLABreachNotification(companyIdStr, {
         ticketId,
         subject: ticket.subject,
         priority: ticket.priority,
-        minutesLeft,
+        minutesOverdue,
+        assignedAgent: ticket.assignedTo || undefined,
+        externalId: ticket.externalId,
+      }).catch((err: unknown) => {
+        childLogger.warn({ err, ticketId }, 'Slack SLA notification failed (non-fatal)');
       });
 
-      // Auto-assign if not assigned
+      childLogger.warn(
+        { ticketId, priority: ticket.priority, minutesOverdue },
+        'SLA breached for ticket'
+      );
+    } else if (timeToBreachMs <= 1800000) {
+      // ──── CRITICAL (<30 min) ──────────────────────────────────────
+      stats.critical++;
+
+      const minutesRemaining = getMinutesUntilBreach(ticket as unknown as ITicket);
+
+      // Socket.io: emit 'sla:critical'
+      emitToCompany(companyIdStr, 'sla:critical', {
+        ticketId,
+        subject: ticket.subject,
+        priority: ticket.priority,
+        minutesLeft: minutesRemaining,
+        assignedAgent: ticket.assignedTo || null,
+      });
+
+      // Auto-assign to least-loaded senior agent if unassigned
       if (!ticket.assignedTo) {
         const agent = await findLeastLoadedAgent(companyId);
         if (agent) {
@@ -209,22 +252,28 @@ async function processCompanySLA(company: ActiveCompany): Promise<{
             { $set: { assignedTo: agent } }
           );
           childLogger.info(
-            { ticketId, agent },
-            'Auto-assigned ticket to least loaded agent'
+            { ticketId, agent, minutesLeft: minutesRemaining },
+            'Auto-assigned critical SLA ticket to least loaded agent'
           );
         }
       }
+
+      childLogger.info(
+        { ticketId, priority: ticket.priority, minutesLeft: minutesRemaining },
+        'Ticket in critical SLA zone'
+      );
     } else if (timeToBreachMs <= 3600000) {
-      // NOTICE - 30 min to 1 hour
-      stats.noticed++;
+      // ──── WARNING (30-60 min) ─────────────────────────────────────
+      stats.warning++;
 
-      const minutesLeft = getMinutesUntilBreach(ticket as ITicket);
+      const minutesRemaining = getMinutesUntilBreach(ticket as unknown as ITicket);
 
-      // Emit socket event
-      emitToCompany(companyIdStr, 'sla:notice', {
+      // Socket.io: emit 'sla:warning'
+      emitToCompany(companyIdStr, 'sla:warning', {
         ticketId,
         subject: ticket.subject,
-        minutesLeft,
+        priority: ticket.priority,
+        minutesLeft: minutesRemaining,
       });
     }
   }
@@ -249,22 +298,22 @@ export const slaMonitorWorker = new Worker(
 
       if (companies.length === 0) {
         childLogger.info('No active companies with open tickets');
-        return { processed: 0, breached: 0, warned: 0, noticed: 0 };
+        return { processed: 0, breached: 0, critical: 0, warning: 0 };
       }
 
       // Process all companies in parallel
       const results = await Promise.all(
-        companies.map((company) => processCompanySLA(company))
+        companies.map((company: ActiveCompany) => processCompanySLA(company))
       );
 
       // Aggregate stats
       const totalStats = results.reduce(
-        (acc, stats) => ({
+        (acc: { breached: number; critical: number; warning: number }, stats: { breached: number; critical: number; warning: number }) => ({
           breached: acc.breached + stats.breached,
-          warned: acc.warned + stats.warned,
-          noticed: acc.noticed + stats.noticed,
+          critical: acc.critical + stats.critical,
+          warning: acc.warning + stats.warning,
         }),
-        { breached: 0, warned: 0, noticed: 0 }
+        { breached: 0, critical: 0, warning: 0 }
       );
 
       const duration = Date.now() - startTime;
@@ -299,18 +348,18 @@ export const slaMonitorWorker = new Worker(
 );
 
 // Worker event handlers
-slaMonitorWorker.on('completed', (job, result) => {
+slaMonitorWorker.on('completed', (job: Job, result: unknown) => {
   childLogger.debug({ jobId: job.id, result }, 'SLA check job completed');
 });
 
-slaMonitorWorker.on('failed', (job, error) => {
+slaMonitorWorker.on('failed', (job: Job | undefined, error: Error) => {
   childLogger.error(
     { jobId: job?.id, error: error.message },
     'SLA check job failed'
   );
 });
 
-slaMonitorWorker.on('error', (error) => {
+slaMonitorWorker.on('error', (error: Error) => {
   childLogger.error({ error: error.message }, 'SLA monitor worker error');
 });
 

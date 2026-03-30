@@ -21,6 +21,7 @@ import onboardingRouter from './routes/onboarding.js';
 import proactiveTriggersRouter from './routes/proactiveTriggers.js';
 import fraudRouter from './routes/fraud.js';
 import languagesRouter from './routes/languages.js';
+import slaRouter from './routes/sla.js';
 import { initializeSockets, cleanupSockets } from './sockets/index.js';
 
 // Extend Express Request type for requestId
@@ -112,6 +113,7 @@ async function bootstrap(): Promise<void> {
   app.use('/api/proactive-triggers', proactiveTriggersRouter);
   app.use('/api/fraud', fraudRouter);
   app.use('/api/languages', languagesRouter);
+  app.use('/api/sla', slaRouter);
 
   // Debug endpoint (protected in production)
   if (env.NODE_ENV === 'development') {

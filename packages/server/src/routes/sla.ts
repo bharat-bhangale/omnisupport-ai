@@ -3,9 +3,17 @@ import { z } from 'zod';
 import mongoose from 'mongoose';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { AppError } from '../middleware/AppError.js';
+import { roleGuard } from '../middleware/roleGuard.js';
 import { logger } from '../config/logger.js';
 import { Ticket } from '../models/Ticket.js';
-import { getSLAStatus, getTimeToBreachMs, getMinutesUntilBreach, DEFAULT_SLA_POLICY, type SLAPolicy } from '../services/slaCalculator.js';
+import { Company } from '../models/Company.js';
+import { SLABreachRecord } from '../models/SLABreachRecord.js';
+import {
+  getSLAStatus,
+  getTimeToBreachMinutes,
+  DEFAULT_SLA_POLICY,
+  type SLAPolicy,
+} from '../services/slaCalculator.js';
 
 const router = Router();
 const childLogger = logger.child({ route: 'sla' });
@@ -19,14 +27,25 @@ interface AuthRequest extends Request {
   };
 }
 
-// Validation schemas
-const complianceQuerySchema = z.object({
-  days: z.coerce.number().int().min(1).max(365).default(30),
-});
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-const historyQuerySchema = z.object({
-  days: z.coerce.number().int().min(1).max(365).default(30),
-});
+function getCompanyId(req: AuthRequest): string {
+  const companyId = req.user?.companyId;
+  if (!companyId) throw AppError.unauthorized('Missing company context');
+  return companyId;
+}
+
+function priorityToP(priority: string): 'P1' | 'P2' | 'P3' | 'P4' {
+  const map: Record<string, 'P1' | 'P2' | 'P3' | 'P4'> = {
+    urgent: 'P1',
+    high: 'P2',
+    normal: 'P3',
+    low: 'P4',
+  };
+  return map[priority] || 'P3';
+}
+
+// ─── Validation Schemas ─────────────────────────────────────────────────────
 
 const slaPolicySchema = z.object({
   P1: z.object({
@@ -47,67 +66,79 @@ const slaPolicySchema = z.object({
   }),
 });
 
-/**
- * Map internal priority to P notation
- */
-function priorityToP(priority: string): 'P1' | 'P2' | 'P3' | 'P4' {
-  const map: Record<string, 'P1' | 'P2' | 'P3' | 'P4'> = {
-    urgent: 'P1',
-    high: 'P2',
-    normal: 'P3',
-    low: 'P4',
-  };
-  return map[priority] || 'P3';
-}
+const breachReviewSchema = z.object({
+  rootCause: z.string().min(5).max(2000),
+});
+
+// ─── GET /sla/compliance ────────────────────────────────────────────────────
 
 /**
- * GET /sla/compliance - Get SLA compliance stats per priority tier
+ * GET /sla/compliance?days=30
+ * SLA compliance stats per priority tier with overall rate & top breach categories
  */
 router.get(
   '/compliance',
+  roleGuard('manager', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const companyId = req.user?.companyId;
-    if (!companyId) {
-      throw AppError.unauthorized('Missing company context');
-    }
-
-    const { days } = complianceQuerySchema.parse(req.query);
+    const companyId = getCompanyId(req);
+    const days = parseInt(req.query.days as string) || 30;
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     const companyObjectId = new mongoose.Types.ObjectId(companyId);
 
     // Aggregate SLA stats by priority
-    const stats = await Ticket.aggregate([
-      {
-        $match: {
-          companyId: companyObjectId,
-          createdAt: { $gte: startDate },
-          status: { $in: ['solved', 'closed'] }, // Only completed tickets
-        },
-      },
-      {
-        $group: {
-          _id: '$priority',
-          total: { $sum: 1 },
-          breached: {
-            $sum: { $cond: ['$sla.isBreached', 1, 0] },
+    const [stats, topBreachCategories] = await Promise.all([
+      Ticket.aggregate([
+        {
+          $match: {
+            companyId: companyObjectId,
+            createdAt: { $gte: startDate },
+            status: { $in: ['solved', 'closed'] },
           },
-          respondedOnTime: {
-            $sum: {
-              $cond: [
-                {
-                  $and: [
-                    { $ifNull: ['$sla.firstResponseAt', false] },
-                    { $ifNull: ['$sla.responseDeadline', false] },
-                    { $lte: ['$sla.firstResponseAt', '$sla.responseDeadline'] },
-                  ],
-                },
-                1,
-                0,
-              ],
+        },
+        {
+          $group: {
+            _id: '$priority',
+            total: { $sum: 1 },
+            breached: {
+              $sum: { $cond: ['$sla.isBreached', 1, 0] },
+            },
+            respondedOnTime: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $ifNull: ['$sla.firstResponseAt', false] },
+                      { $ifNull: ['$sla.responseDeadline', false] },
+                      { $lte: ['$sla.firstResponseAt', '$sla.responseDeadline'] },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
             },
           },
         },
-      },
+      ]),
+
+      // Top breach categories
+      SLABreachRecord.aggregate([
+        {
+          $match: {
+            companyId: companyObjectId,
+            createdAt: { $gte: startDate },
+            category: { $exists: true, $ne: null },
+          },
+        },
+        {
+          $group: {
+            _id: '$category',
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+      ]),
     ]);
 
     // Transform to P-notation format
@@ -115,46 +146,183 @@ router.get(
       total: number;
       onTime: number;
       breached: number;
-      complianceRate: number;
+      rate: number;
     }> = {
-      P1: { total: 0, onTime: 0, breached: 0, complianceRate: 100 },
-      P2: { total: 0, onTime: 0, breached: 0, complianceRate: 100 },
-      P3: { total: 0, onTime: 0, breached: 0, complianceRate: 100 },
-      P4: { total: 0, onTime: 0, breached: 0, complianceRate: 100 },
+      P1: { total: 0, onTime: 0, breached: 0, rate: 100 },
+      P2: { total: 0, onTime: 0, breached: 0, rate: 100 },
+      P3: { total: 0, onTime: 0, breached: 0, rate: 100 },
+      P4: { total: 0, onTime: 0, breached: 0, rate: 100 },
     };
+
+    let overallTotal = 0;
+    let overallBreached = 0;
 
     for (const stat of stats) {
       const pKey = priorityToP(stat._id);
+      const breachedCount = stat.breached as number;
+      const totalCount = stat.total as number;
+      const onTimeCount = stat.respondedOnTime as number;
+
       compliance[pKey] = {
-        total: stat.total,
-        onTime: stat.respondedOnTime,
-        breached: stat.breached,
-        complianceRate: stat.total > 0
-          ? Math.round(((stat.total - stat.breached) / stat.total) * 100)
+        total: totalCount,
+        onTime: onTimeCount,
+        breached: breachedCount,
+        rate: totalCount > 0
+          ? Math.round(((totalCount - breachedCount) / totalCount) * 100)
           : 100,
       };
+
+      overallTotal += totalCount;
+      overallBreached += breachedCount;
     }
 
-    childLogger.debug({ companyId, days, compliance }, 'SLA compliance fetched');
+    // Calculate overall rate
+    const overallRate = overallTotal > 0
+      ? Math.round(((overallTotal - overallBreached) / overallTotal) * 100)
+      : 100;
+
+    // Calculate trend (compare current period to previous period)
+    const previousStartDate = new Date(startDate.getTime() - days * 24 * 60 * 60 * 1000);
+    const previousStats = await Ticket.aggregate([
+      {
+        $match: {
+          companyId: companyObjectId,
+          createdAt: { $gte: previousStartDate, $lt: startDate },
+          status: { $in: ['solved', 'closed'] },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          breached: { $sum: { $cond: ['$sla.isBreached', 1, 0] } },
+        },
+      },
+    ]);
+
+    const prevTotal = previousStats[0]?.total || 0;
+    const prevBreached = previousStats[0]?.breached || 0;
+    const prevRate = prevTotal > 0
+      ? Math.round(((prevTotal - prevBreached) / prevTotal) * 100)
+      : 100;
+    const trend = overallRate - prevRate; // positive = improving
+
+    childLogger.debug({ companyId, days, overallRate }, 'SLA compliance fetched');
 
     res.json({
       period: { days, startDate: startDate.toISOString() },
-      compliance,
+      ...compliance,
+      overall: {
+        rate: overallRate,
+        trend,
+      },
+      topBreachCategories: topBreachCategories.map(
+        (cat: { _id: string; count: number }) => ({
+          category: cat._id,
+          count: cat.count,
+        })
+      ),
     });
   })
 );
 
+// ─── GET /sla/breaches ──────────────────────────────────────────────────────
+
 /**
- * GET /sla/at-risk - Get tickets at risk of SLA breach
+ * GET /sla/breaches?days=30&priority=urgent
+ * Paginated breach records with ticket details
+ */
+router.get(
+  '/breaches',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = getCompanyId(req);
+    const companyObjectId = new mongoose.Types.ObjectId(companyId);
+
+    const days = parseInt(req.query.days as string) || 30;
+    const priority = req.query.priority as string | undefined;
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+    const skip = (page - 1) * limit;
+
+    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    // Build query
+    const query: Record<string, unknown> = {
+      companyId: companyObjectId,
+      createdAt: { $gte: startDate },
+    };
+
+    if (priority) {
+      query.priority = priority;
+    }
+
+    // Execute query
+    const [breaches, total] = await Promise.all([
+      SLABreachRecord.aggregate([
+        { $match: query },
+        { $sort: { createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: 'tickets',
+            localField: 'ticketId',
+            foreignField: '_id',
+            as: 'ticket',
+            pipeline: [
+              { $project: { subject: 1, status: 1, assignedTo: 1 } },
+            ],
+          },
+        },
+        {
+          $unwind: { path: '$ticket', preserveNullAndEmptyArrays: true },
+        },
+        {
+          $project: {
+            _id: 1,
+            ticketId: 1,
+            externalId: 1,
+            priority: 1,
+            category: 1,
+            slaDeadline: 1,
+            breachedAt: 1,
+            breachDurationMinutes: 1,
+            assignedAgent: 1,
+            resolvedAt: 1,
+            rootCause: 1,
+            createdAt: 1,
+            'ticket.subject': 1,
+            'ticket.status': 1,
+          },
+        },
+      ]),
+      SLABreachRecord.countDocuments(query),
+    ]);
+
+    res.json({
+      breaches,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  })
+);
+
+// ─── GET /sla/at-risk ───────────────────────────────────────────────────────
+
+/**
+ * GET /sla/at-risk
+ * Active tickets with status='warning'|'critical', sorted by minutesLeft ascending
  */
 router.get(
   '/at-risk',
+  roleGuard('manager', 'admin', 'agent'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const companyId = req.user?.companyId;
-    if (!companyId) {
-      throw AppError.unauthorized('Missing company context');
-    }
-
+    const companyId = getCompanyId(req);
     const companyObjectId = new mongoose.Types.ObjectId(companyId);
 
     // Find open tickets with SLA deadline
@@ -164,14 +332,14 @@ router.get(
       'sla.responseDeadline': { $exists: true },
       'sla.isBreached': { $ne: true },
     })
-      .select('_id subject priority sla assignedTo createdAt')
+      .select('_id subject priority sla assignedTo createdAt externalId')
       .lean();
 
     // Filter to warning/critical and calculate time to breach
     const atRiskTickets = tickets
       .map((ticket) => {
         const status = getSLAStatus(ticket as unknown as Parameters<typeof getSLAStatus>[0]);
-        const timeToBreachMs = getTimeToBreachMs(ticket as unknown as Parameters<typeof getTimeToBreachMs>[0]);
+        const minutesLeft = getTimeToBreachMinutes(ticket as unknown as Parameters<typeof getTimeToBreachMinutes>[0]);
 
         if (status !== 'warning' && status !== 'critical') {
           return null;
@@ -179,21 +347,17 @@ router.get(
 
         return {
           ticketId: ticket._id.toString(),
+          externalId: ticket.externalId || null,
           subject: ticket.subject,
           priority: ticket.priority,
           slaStatus: status,
-          minutesLeft: timeToBreachMs !== null ? Math.max(0, Math.floor(timeToBreachMs / 60000)) : 0,
+          minutesLeft: Math.max(0, minutesLeft),
           assignedAgent: ticket.assignedTo || null,
           responseDeadline: ticket.sla?.responseDeadline,
         };
       })
       .filter((t): t is NonNullable<typeof t> => t !== null)
-      .sort((a, b) => a.minutesLeft - b.minutesLeft); // Sort by urgency
-
-    childLogger.debug(
-      { companyId, atRiskCount: atRiskTickets.length },
-      'At-risk tickets fetched'
-    );
+      .sort((a, b) => a.minutesLeft - b.minutesLeft); // Most urgent first
 
     res.json({
       tickets: atRiskTickets,
@@ -202,34 +366,33 @@ router.get(
   })
 );
 
+// ─── GET /sla/trend ─────────────────────────────────────────────────────────
+
 /**
- * GET /sla/history - Get daily breach counts for trend chart
+ * GET /sla/trend?days=30
+ * Daily breach count per priority for trend chart
  */
 router.get(
-  '/history',
+  '/trend',
+  roleGuard('manager', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const companyId = req.user?.companyId;
-    if (!companyId) {
-      throw AppError.unauthorized('Missing company context');
-    }
-
-    const { days } = historyQuerySchema.parse(req.query);
-    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const companyId = getCompanyId(req);
     const companyObjectId = new mongoose.Types.ObjectId(companyId);
+    const days = parseInt(req.query.days as string) || 30;
+    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-    // Aggregate breach counts by day and priority
-    const breachHistory = await Ticket.aggregate([
+    // Use SLABreachRecord for accurate trend data
+    const breachTrend = await SLABreachRecord.aggregate([
       {
         $match: {
           companyId: companyObjectId,
-          'sla.isBreached': true,
-          createdAt: { $gte: startDate },
+          breachedAt: { $gte: startDate },
         },
       },
       {
         $group: {
           _id: {
-            date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            date: { $dateToString: { format: '%Y-%m-%d', date: '$breachedAt' } },
             priority: '$priority',
           },
           count: { $sum: 1 },
@@ -251,7 +414,11 @@ router.get(
     ]);
 
     // Transform to chart-friendly format
-    const history = breachHistory.map((day) => {
+    const trend = breachTrend.map((day: {
+      _id: string;
+      total: number;
+      breaches: Array<{ priority: string; count: number }>;
+    }) => {
       const breachesByPriority: Record<string, number> = {
         P1: 0,
         P2: 0,
@@ -271,61 +438,63 @@ router.get(
       };
     });
 
-    childLogger.debug(
-      { companyId, days, dataPoints: history.length },
-      'SLA history fetched'
-    );
-
     res.json({
       period: { days, startDate: startDate.toISOString() },
-      history,
+      trend,
     });
   })
 );
 
+// ─── GET /sla/policy ────────────────────────────────────────────────────────
+
 /**
- * GET /sla/policy - Get current SLA policy
+ * GET /sla/policy
+ * Get company's current SLA policy or default
  */
 router.get(
   '/policy',
+  roleGuard('manager', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const companyId = req.user?.companyId;
-    if (!companyId) {
-      throw AppError.unauthorized('Missing company context');
+    const companyId = getCompanyId(req);
+
+    const company = await Company.findById(companyId)
+      .select('slaPolicy settings.slaEnabled')
+      .lean();
+
+    if (!company) {
+      throw AppError.notFound('Company');
     }
 
-    // TODO: Fetch from Company model
-    // For now, return default policy
-    const policy = DEFAULT_SLA_POLICY;
+    // Company.slaPolicy may or may not exist; fall back to default
+    const policy = (company as Record<string, unknown>).slaPolicy || DEFAULT_SLA_POLICY;
+    const slaEnabled = company.settings?.slaEnabled ?? true;
 
-    childLogger.debug({ companyId }, 'SLA policy fetched');
-
-    res.json({ policy });
+    res.json({
+      policy,
+      slaEnabled,
+      isCustom: !!(company as Record<string, unknown>).slaPolicy,
+    });
   })
 );
 
+// ─── PATCH /sla/policy ──────────────────────────────────────────────────────
+
 /**
- * PATCH /sla/policy - Update SLA policy
- * Requires admin role
+ * PATCH /sla/policy
+ * Update company SLA policy (admin only)
  */
 router.patch(
   '/policy',
+  roleGuard('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const companyId = req.user?.companyId;
-    const role = req.user?.role;
-
-    if (!companyId) {
-      throw AppError.unauthorized('Missing company context');
-    }
-
-    if (role !== 'admin') {
-      throw AppError.forbidden('Only admins can update SLA policy');
-    }
+    const companyId = getCompanyId(req);
 
     const policy = slaPolicySchema.parse(req.body) as SLAPolicy;
 
-    // TODO: Update Company model with new policy
-    // await Company.updateOne({ _id: companyId }, { $set: { slaPolicy: policy } });
+    await Company.updateOne(
+      { _id: companyId },
+      { $set: { slaPolicy: policy } }
+    );
 
     childLogger.info(
       { companyId, policy },
@@ -340,17 +509,60 @@ router.patch(
   })
 );
 
+// ─── POST /sla/breaches/:id/review ──────────────────────────────────────────
+
 /**
- * GET /sla/summary - Quick overview of current SLA status
+ * POST /sla/breaches/:id/review
+ * Document root cause for a breach record
+ */
+router.post(
+  '/breaches/:id/review',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = getCompanyId(req);
+    const id = req.params.id as string;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw AppError.badRequest('Invalid breach record ID');
+    }
+
+    const { rootCause } = breachReviewSchema.parse(req.body);
+
+    const breachRecord = await SLABreachRecord.findOneAndUpdate(
+      {
+        _id: id,
+        companyId: new mongoose.Types.ObjectId(companyId),
+      },
+      {
+        rootCause,
+      },
+      { new: true }
+    );
+
+    if (!breachRecord) {
+      throw AppError.notFound('SLA Breach Record');
+    }
+
+    childLogger.info(
+      { breachId: id, companyId, rootCause },
+      'SLA breach reviewed'
+    );
+
+    res.json({ breachRecord });
+  })
+);
+
+// ─── GET /sla/summary ───────────────────────────────────────────────────────
+
+/**
+ * GET /sla/summary
+ * Quick overview of current SLA status
  */
 router.get(
   '/summary',
+  roleGuard('manager', 'admin', 'agent'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const companyId = req.user?.companyId;
-    if (!companyId) {
-      throw AppError.unauthorized('Missing company context');
-    }
-
+    const companyId = getCompanyId(req);
     const companyObjectId = new mongoose.Types.ObjectId(companyId);
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -363,7 +575,7 @@ router.get(
         'sla.responseDeadline': { $exists: true },
       }),
 
-      // Count at-risk by status
+      // Count at-risk by status (done in aggregation for efficiency)
       Ticket.aggregate([
         {
           $match: {
@@ -406,10 +618,9 @@ router.get(
       ]),
 
       // Count breaches today
-      Ticket.countDocuments({
+      SLABreachRecord.countDocuments({
         companyId: companyObjectId,
-        'sla.isBreached': true,
-        updatedAt: { $gte: todayStart },
+        breachedAt: { $gte: todayStart },
       }),
     ]);
 

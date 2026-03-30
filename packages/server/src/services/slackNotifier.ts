@@ -390,8 +390,97 @@ export async function sendWeeklyLearningDigest(
   return success;
 }
 
+/**
+ * Send SLA breach notification to Slack
+ */
+export async function sendSLABreachNotification(
+  companyId: string,
+  breachData: {
+    ticketId: string;
+    subject: string;
+    priority: string;
+    minutesOverdue: number;
+    assignedAgent?: string;
+    externalId?: string;
+  }
+): Promise<boolean> {
+  const webhookUrl = await getSlackWebhook(companyId);
+  if (!webhookUrl) {
+    return false;
+  }
+
+  const priorityEmoji: Record<string, string> = {
+    urgent: '🚨🚨🚨',
+    high: '🔴🔴',
+    normal: '🟡',
+    low: '🟢',
+  };
+
+  const blocks: SlackBlock[] = [
+    {
+      type: 'header',
+      text: {
+        type: 'plain_text',
+        text: `${priorityEmoji[breachData.priority] || '⚠️'} SLA BREACH ALERT`,
+        emoji: true,
+      },
+    },
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*A ticket has breached its SLA response deadline!*`,
+      },
+    },
+    {
+      type: 'section',
+      fields: [
+        {
+          type: 'mrkdwn',
+          text: `*Subject:*\n${breachData.subject}`,
+        },
+        {
+          type: 'mrkdwn',
+          text: `*Priority:*\n${breachData.priority.toUpperCase()}`,
+        },
+        {
+          type: 'mrkdwn',
+          text: `*Overdue by:*\n${breachData.minutesOverdue} minutes`,
+        },
+        {
+          type: 'mrkdwn',
+          text: `*Assigned to:*\n${breachData.assignedAgent || '_Unassigned_'}`,
+        },
+      ],
+    },
+    {
+      type: 'context',
+      elements: [
+        {
+          type: 'mrkdwn',
+          text: `Ticket ID: \`${breachData.externalId || breachData.ticketId}\` | Breached at ${new Date().toLocaleTimeString()}`,
+        },
+      ],
+    },
+    {
+      type: 'divider',
+    } as SlackBlock,
+  ];
+
+  const success = await sendToSlack(webhookUrl, blocks);
+  if (success) {
+    childLogger.info(
+      { companyId, ticketId: breachData.ticketId, priority: breachData.priority },
+      'SLA breach notification sent to Slack'
+    );
+  }
+
+  return success;
+}
+
 export default {
   sendCallSummary,
   sendEscalationAlert,
   sendWeeklyLearningDigest,
+  sendSLABreachNotification,
 };
