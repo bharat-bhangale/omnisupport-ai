@@ -5,6 +5,8 @@ export const REDIS_TTL = {
   ANALYTICS_CACHE: 86400,      // 24 hours
   RATE_LIMIT: 60,              // 1 minute
   LOCK: 30,                    // 30 seconds
+  QA_RUBRIC_CACHE: 3600,       // 1 hour
+  AGENT_METRICS: 2592000,      // 30 days
 } as const;
 
 // Redis key prefixes

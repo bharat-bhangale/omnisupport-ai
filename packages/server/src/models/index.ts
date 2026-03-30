@@ -1,4 +1,4 @@
-export { Company, type ICompany, type VoiceConfig, type TextConfig, type QARubric, type QARubricDimension } from './Company.js';
+export { Company, type ICompany, type VoiceConfig, type TextConfig } from './Company.js';
 export { Customer, type ICustomer } from './Customer.js';
 export { CallSession, type ICallSession } from './CallSession.js';
 export { Ticket, type ITicket } from './Ticket.js';
@@ -7,5 +7,6 @@ export { Workflow, type IWorkflow, WORKFLOW_TEMPLATES } from './Workflow.js';
 export { KBDocument, type IKBDocument, KBGap, type IKBGap } from './KBDocument.js';
 export { Escalation, type IEscalation, type EscalationStatus, type EscalationPriority } from './Escalation.js';
 export { QAReport, type IQAReport, type QADimensionScore } from './QAReport.js';
+export { QARubric, DEFAULT_QA_RUBRIC, type IQARubric, type IQARubricDimension, type QADimensionKey } from './QARubric.js';
 export { GapReport, type IGapReport, type GapCluster, type FeedbackSummaryByType, type ABResultSnapshot } from './GapReport.js';
 export { PromptVariant, type IPromptVariant, type VariantConfig, calculateConfidence } from './PromptVariant.js';

@@ -2,13 +2,13 @@ import { useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
-  XCircle,
   MessageSquare,
   Target,
   Lightbulb,
   ArrowUpDown,
   Smile,
   Loader2,
+  Info,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useReviewQAReportMutation, type QAReport, type QADimensionScore } from '../api/qaApi';
@@ -48,13 +48,33 @@ function getScoreBgColor(score: number): string {
   return 'bg-red-50';
 }
 
-// Dimension display names and icons
-const dimensionConfig: Record<string, { label: string; icon: React.ReactNode }> = {
-  intentUnderstanding: { label: 'Intent Understanding', icon: <Target className="h-4 w-4" /> },
-  responseAccuracy: { label: 'Response Accuracy', icon: <CheckCircle2 className="h-4 w-4" /> },
-  resolutionSuccess: { label: 'Resolution Success', icon: <Lightbulb className="h-4 w-4" /> },
-  escalationCorrectness: { label: 'Escalation Correctness', icon: <ArrowUpDown className="h-4 w-4" /> },
-  customerExperience: { label: 'Customer Experience', icon: <Smile className="h-4 w-4" /> },
+// Dimension display names, icons, and tooltips
+const dimensionConfig: Record<string, { label: string; icon: React.ReactNode; tooltip: string }> = {
+  intentUnderstanding: {
+    label: 'Intent Understanding',
+    icon: <Target className="h-4 w-4" />,
+    tooltip: 'How accurately the AI identified the customer\'s true intent and underlying needs.',
+  },
+  responseAccuracy: {
+    label: 'Response Accuracy',
+    icon: <CheckCircle2 className="h-4 w-4" />,
+    tooltip: 'Whether the information provided was factually correct and relevant to the query.',
+  },
+  resolutionSuccess: {
+    label: 'Resolution Success',
+    icon: <Lightbulb className="h-4 w-4" />,
+    tooltip: 'Whether the AI successfully resolved the customer\'s issue or advanced toward resolution.',
+  },
+  escalationCorrectness: {
+    label: 'Escalation Correctness',
+    icon: <ArrowUpDown className="h-4 w-4" />,
+    tooltip: 'Whether the AI correctly decided to escalate (or not escalate) to a human agent.',
+  },
+  customerExperience: {
+    label: 'Customer Experience',
+    icon: <Smile className="h-4 w-4" />,
+    tooltip: 'Overall tone, empathy, and professionalism of the AI\'s responses.',
+  },
 };
 
 export default function QAScoreCard({ report, compact = false, onReviewed }: QAScoreCardProps) {
@@ -106,6 +126,32 @@ function CompactScoreCard({ score }: { score: number }) {
         </span>
       </div>
       <span className="text-xs text-gray-500 mt-1">QA: {score}</span>
+    </div>
+  );
+}
+
+// Tooltip component
+function DimensionTooltip({ text }: { text: string }) {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div className="relative inline-block">
+      <button
+        type="button"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onFocus={() => setShow(true)}
+        onBlur={() => setShow(false)}
+        className="text-gray-400 hover:text-gray-600 focus:outline-none"
+      >
+        <Info className="h-3.5 w-3.5" />
+      </button>
+      {show && (
+        <div className="absolute z-50 w-64 px-3 py-2 text-xs text-white bg-gray-900 rounded-lg shadow-lg -top-2 left-6 transform">
+          {text}
+          <div className="absolute w-2 h-2 bg-gray-900 transform rotate-45 top-3 -left-1" />
+        </div>
+      )}
     </div>
   );
 }
@@ -172,9 +218,10 @@ function FullScoreCard({ report, onReviewed }: { report: QAReport; onReviewed?: 
       {/* Dimension rows */}
       <div className="divide-y divide-gray-100">
         {dimensions.map(([key, dimension]) => {
-          const config = dimensionConfig[key] || { label: key, icon: null };
+          const config = dimensionConfig[key] || { label: key, icon: null, tooltip: '' };
           const isFlagged = report.flaggedDimensions.includes(key);
           const minPass = DEFAULT_MIN_PASS_SCORES[key] || 6;
+          const passed = dimension.score >= minPass;
 
           return (
             <div
@@ -185,8 +232,16 @@ function FullScoreCard({ report, onReviewed }: { report: QAReport; onReviewed?: 
                 <div className="flex items-center gap-2">
                   <span className="text-gray-400">{config.icon}</span>
                   <span className="font-medium text-gray-900">{config.label}</span>
-                  {isFlagged && (
-                    <span className="text-xs px-1.5 py-0.5 bg-red-100 text-red-700 rounded">
+                  {config.tooltip && <DimensionTooltip text={config.tooltip} />}
+                  {/* Pass/Fail indicator */}
+                  {passed ? (
+                    <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Pass
+                    </span>
+                  ) : (
+                    <span className="text-xs px-1.5 py-0.5 bg-red-100 text-red-700 rounded flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
                       Below {minPass}/10
                     </span>
                   )}
