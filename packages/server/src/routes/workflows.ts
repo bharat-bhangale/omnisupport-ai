@@ -1,10 +1,17 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { Workflow, WORKFLOW_TEMPLATES, type WorkflowTriggerEvent, type ConditionOperator, type WorkflowActionType } from '../models/Workflow.js';
+import { Workflow, type WorkflowTriggerEvent, type ConditionOperator, type WorkflowActionType } from '../models/Workflow.js';
+import { WorkflowExecutionLog } from '../models/WorkflowExecutionLog.js';
 import { testWorkflow } from '../services/workflowTrigger.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { AppError } from '../middleware/AppError.js';
 import { logger } from '../config/logger.js';
+import {
+  WORKFLOW_TEMPLATES,
+  getTemplateById,
+  convertTemplateConditions,
+  convertTemplateActions,
+} from '../config/workflowTemplates.js';
 
 const router = Router();
 const childLogger = logger.child({ route: 'workflows' });
@@ -151,11 +158,78 @@ router.get(
 router.get(
   '/templates',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
+    // Group templates by category
+    const byCategory = WORKFLOW_TEMPLATES.reduce((acc, template) => {
+      if (!acc[template.category]) {
+        acc[template.category] = [];
+      }
+      acc[template.category].push(template);
+      return acc;
+    }, {} as Record<string, typeof WORKFLOW_TEMPLATES>);
+
     res.json({
       success: true,
       data: {
         templates: WORKFLOW_TEMPLATES,
+        byCategory,
+        categories: ['routing', 'notification', 'escalation', 'automation', 'sla'],
       },
+    });
+  })
+);
+
+/**
+ * POST /workflows/from-template/:templateId - Create workflow from template
+ */
+router.post(
+  '/from-template/:templateId',
+  roleGuard('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    const userId = req.user?.sub;
+    if (!companyId || !userId) {
+      throw AppError.unauthorized('Missing user context');
+    }
+
+    const { templateId } = req.params;
+    const { name } = z.object({
+      name: z.string().min(1).max(200).optional(),
+    }).parse(req.body);
+
+    const template = getTemplateById(templateId);
+    if (!template) {
+      throw AppError.notFound('Workflow template');
+    }
+
+    const workflowName = name || template.name;
+
+    // Check for duplicate name
+    const existing = await Workflow.findOne({ companyId, name: workflowName });
+    if (existing) {
+      throw AppError.conflict(`Workflow with name "${workflowName}" already exists`);
+    }
+
+    const workflow = await Workflow.create({
+      companyId,
+      name: workflowName,
+      description: template.description,
+      isActive: false, // Start inactive for user configuration
+      version: 1,
+      trigger: { event: template.trigger, filters: [] },
+      conditions: convertTemplateConditions(template.conditions),
+      conditionLogic: 'AND',
+      actions: convertTemplateActions(template.actions),
+      createdBy: userId,
+    });
+
+    childLogger.info(
+      { workflowId: workflow._id, templateId, userId },
+      'Workflow created from template'
+    );
+
+    res.status(201).json({
+      success: true,
+      data: { workflow, sourceTemplate: templateId },
     });
   })
 );
@@ -183,6 +257,95 @@ router.get(
     res.json({
       success: true,
       data: { workflow },
+    });
+  })
+);
+
+/**
+ * GET /workflows/:id/history - Get execution history for a workflow
+ */
+router.get(
+  '/:id/history',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const { days = '7', limit = '100' } = req.query;
+    const daysNum = Math.min(Math.max(parseInt(days as string, 10) || 7, 1), 90);
+    const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 100, 1), 500);
+
+    // Verify workflow exists and belongs to company
+    const workflow = await Workflow.findOne({
+      _id: req.params.id,
+      companyId,
+    }).select('_id name').lean().exec();
+
+    if (!workflow) {
+      throw AppError.notFound('Workflow');
+    }
+
+    const history = await WorkflowExecutionLog.getHistory(
+      req.params.id,
+      companyId,
+      daysNum,
+      limitNum
+    );
+
+    res.json({
+      success: true,
+      data: {
+        workflowId: req.params.id,
+        workflowName: workflow.name,
+        days: daysNum,
+        executions: history,
+        count: history.length,
+      },
+    });
+  })
+);
+
+/**
+ * GET /workflows/:id/analytics - Get analytics for a workflow
+ */
+router.get(
+  '/:id/analytics',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      throw AppError.unauthorized('Missing company context');
+    }
+
+    const { days = '30' } = req.query;
+    const daysNum = Math.min(Math.max(parseInt(days as string, 10) || 30, 1), 90);
+
+    // Verify workflow exists and belongs to company
+    const workflow = await Workflow.findOne({
+      _id: req.params.id,
+      companyId,
+    }).select('_id name stats').lean().exec();
+
+    if (!workflow) {
+      throw AppError.notFound('Workflow');
+    }
+
+    const analytics = await WorkflowExecutionLog.getAnalytics(
+      req.params.id,
+      companyId,
+      daysNum
+    );
+
+    res.json({
+      success: true,
+      data: {
+        workflowId: req.params.id,
+        workflowName: workflow.name,
+        days: daysNum,
+        ...analytics,
+        // Also include lifetime stats from the workflow itself
+        lifetimeStats: workflow.stats,
+      },
     });
   })
 );
@@ -408,61 +571,6 @@ router.post(
     );
 
     res.json({
-      success: true,
-      data: { workflow },
-    });
-  })
-);
-
-/**
- * POST /workflows/from-template - Create workflow from template
- */
-router.post(
-  '/from-template',
-  roleGuard('manager', 'admin'),
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const companyId = req.user?.companyId;
-    const userId = req.user?.sub;
-    if (!companyId || !userId) {
-      throw AppError.unauthorized('Missing user context');
-    }
-
-    const { templateId, name } = z.object({
-      templateId: z.string(),
-      name: z.string().min(1).max(200).optional(),
-    }).parse(req.body);
-
-    const template = WORKFLOW_TEMPLATES.find((t) => t.id === templateId);
-    if (!template) {
-      throw AppError.notFound('Workflow template');
-    }
-
-    const workflowName = name || template.name;
-
-    // Check for duplicate name
-    const existing = await Workflow.findOne({ companyId, name: workflowName });
-    if (existing) {
-      throw AppError.conflict(`Workflow with name "${workflowName}" already exists`);
-    }
-
-    const workflow = await Workflow.create({
-      companyId,
-      name: workflowName,
-      description: template.description,
-      isActive: false, // Start inactive so user can configure
-      trigger: template.trigger,
-      conditions: template.conditions,
-      conditionLogic: template.conditionLogic,
-      actions: template.actions,
-      createdBy: userId,
-    });
-
-    childLogger.info(
-      { workflowId: workflow._id, templateId, userId },
-      'Workflow created from template'
-    );
-
-    res.status(201).json({
       success: true,
       data: { workflow },
     });

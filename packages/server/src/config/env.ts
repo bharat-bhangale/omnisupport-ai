@@ -75,6 +75,10 @@ const envSchema = z.object({
 
   // SendGrid
   SENDGRID_API_KEY: z.string().optional(),
+  SENDGRID_FROM_EMAIL: z.string().email().optional(),
+
+  // App URL (for email links)
+  APP_URL: z.string().url().optional(),
 
   // Fraud Detection
   IPQUALITYSCORE_API_KEY: z.string().optional(),

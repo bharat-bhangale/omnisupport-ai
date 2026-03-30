@@ -93,10 +93,52 @@ export interface WorkflowTemplate {
   id: string;
   name: string;
   description: string;
-  trigger: WorkflowTrigger;
-  conditions: WorkflowCondition[];
-  conditionLogic: 'AND' | 'OR';
-  actions: WorkflowAction[];
+  category: 'routing' | 'notification' | 'escalation' | 'automation' | 'sla';
+  trigger: WorkflowTriggerEvent;
+  conditions: { field: string; op: ConditionOperator; value: unknown }[];
+  actions: { type: WorkflowActionType; params: Record<string, unknown> }[];
+}
+
+export interface WorkflowExecutionLog {
+  _id: string;
+  workflowId: string;
+  companyId: string;
+  triggerId: string;
+  context: Record<string, unknown>;
+  actionsExecuted: string[];
+  success: boolean;
+  errorMessage?: string;
+  durationMs: number;
+  createdAt: string;
+}
+
+export interface WorkflowHistoryResponse {
+  workflowId: string;
+  workflowName: string;
+  days: number;
+  executions: WorkflowExecutionLog[];
+  count: number;
+}
+
+export interface WorkflowAnalytics {
+  workflowId: string;
+  workflowName: string;
+  days: number;
+  triggeredCount: number;
+  successCount: number;
+  failedCount: number;
+  successRate: number;
+  avgDurationMs: number;
+  avgActionsPerRun: number;
+  topContextFields: { field: string; count: number }[];
+  lastTriggered: string | null;
+  lifetimeStats: WorkflowStats;
+}
+
+export interface TemplatesResponse {
+  templates: WorkflowTemplate[];
+  byCategory: Record<string, WorkflowTemplate[]>;
+  categories: string[];
 }
 
 export interface WorkflowListResponse {
@@ -199,7 +241,7 @@ export const workflowsApi = omnisupportApi.injectEndpoints({
     /**
      * Get workflow templates
      */
-    getTemplates: builder.query<{ templates: WorkflowTemplate[] }, void>({
+    getTemplates: builder.query<TemplatesResponse, void>({
       query: () => '/workflows/templates',
     }),
 
@@ -294,15 +336,44 @@ export const workflowsApi = omnisupportApi.injectEndpoints({
      * Create workflow from template
      */
     createFromTemplate: builder.mutation<
-      { workflow: Workflow },
+      { workflow: Workflow; sourceTemplate: string },
       { templateId: string; name?: string }
     >({
-      query: (data) => ({
-        url: '/workflows/from-template',
+      query: ({ templateId, name }) => ({
+        url: `/workflows/from-template/${templateId}`,
         method: 'POST',
-        body: data,
+        body: { name },
       }),
       invalidatesTags: [{ type: 'Workflow' as const, id: 'LIST' }],
+    }),
+
+    /**
+     * Get workflow execution history
+     */
+    getWorkflowHistory: builder.query<
+      WorkflowHistoryResponse,
+      { id: string; days?: number; limit?: number }
+    >({
+      query: ({ id, days = 7, limit = 100 }) => ({
+        url: `/workflows/${id}/history`,
+        params: { days, limit },
+      }),
+      providesTags: (_result, _error, { id }) => [
+        { type: 'Workflow' as const, id: `${id}-history` },
+      ],
+    }),
+
+    /**
+     * Get workflow analytics
+     */
+    getWorkflowAnalytics: builder.query<WorkflowAnalytics, { id: string; days?: number }>({
+      query: ({ id, days = 30 }) => ({
+        url: `/workflows/${id}/analytics`,
+        params: { days },
+      }),
+      providesTags: (_result, _error, { id }) => [
+        { type: 'Workflow' as const, id: `${id}-analytics` },
+      ],
     }),
   }),
 });
@@ -313,6 +384,8 @@ export const workflowsApi = omnisupportApi.injectEndpoints({
 export const {
   useGetWorkflowsQuery,
   useGetWorkflowQuery,
+  useGetWorkflowHistoryQuery,
+  useGetWorkflowAnalyticsQuery,
   useGetTemplatesQuery,
   useCreateWorkflowMutation,
   useUpdateWorkflowMutation,
