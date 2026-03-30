@@ -10,3 +10,4 @@ export { QAReport, type IQAReport, type QADimensionScore } from './QAReport.js';
 export { QARubric, DEFAULT_QA_RUBRIC, type IQARubric, type IQARubricDimension, type QADimensionKey } from './QARubric.js';
 export { GapReport, type IGapReport, type GapCluster, type FeedbackSummaryByType, type ABResultSnapshot } from './GapReport.js';
 export { PromptVariant, type IPromptVariant, type VariantConfig, calculateConfidence } from './PromptVariant.js';
+export { SLABreachRecord, type ISLABreachRecord } from './SLABreachRecord.js';
