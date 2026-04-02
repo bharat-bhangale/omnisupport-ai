@@ -103,12 +103,12 @@ function UsageBar({
   return (
     <div>
       <div className="flex justify-between text-sm mb-1">
-        <span className="text-gray-600">{label}</span>
-        <span className="text-gray-900 font-medium">
+        <span className="text-[#9CA3AF]">{label}</span>
+        <span className="text-[#F9FAFB] font-medium">
           {used.toLocaleString()} / {limit.toLocaleString()}
         </span>
       </div>
-      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="h-2 bg-[#1E3461] rounded-full overflow-hidden">
         <div
           className={`h-full ${color} transition-all`}
           style={{ width: `${percentage}%` }}
@@ -121,9 +121,9 @@ function UsageBar({
 // Role badge component
 function RoleBadge({ role }: { role: string }): React.ReactElement {
   const config = {
-    admin: 'bg-purple-100 text-purple-700',
-    manager: 'bg-blue-100 text-blue-700',
-    agent: 'bg-gray-100 text-gray-700',
+    admin: 'bg-purple-900/50 text-purple-400',
+    manager: 'bg-blue-900/50 text-blue-400',
+    agent: 'bg-[#1E3461] text-[#9CA3AF]',
   };
 
   return (
@@ -143,7 +143,7 @@ function StatusBadge({ status }: { status: string }): React.ReactElement {
   };
 
   return (
-    <span className={`px-2 py-0.5 text-xs font-medium rounded ${config[status as keyof typeof config] || 'bg-gray-100 text-gray-700'}`}>
+    <span className={`px-2 py-0.5 text-xs font-medium rounded ${config[status as keyof typeof config] || 'bg-[#1E3461] text-[#9CA3AF]'}`}>
       {status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1)}
     </span>
   );
@@ -164,17 +164,17 @@ function InviteModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+      <div className="bg-[#162240] rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Invite Team Member</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <h3 className="text-lg font-semibold text-[#F9FAFB]">Invite Team Member</h3>
+          <button onClick={onClose} className="text-[#6B7280] hover:text-[#9CA3AF]">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[#F9FAFB] mb-1">
               Email Address
             </label>
             <input
@@ -182,18 +182,18 @@ function InviteModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="colleague@company.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] placeholder-[#6B7280] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[#F9FAFB] mb-1">
               Role
             </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as 'agent' | 'manager')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
             >
               <option value="agent">Agent</option>
               <option value="manager">Manager</option>
@@ -205,7 +205,7 @@ function InviteModal({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            className="px-4 py-2 text-sm font-medium text-[#F9FAFB] bg-[#1E3461] rounded-lg hover:bg-[#0F1F3D]"
           >
             Cancel
           </button>
@@ -248,19 +248,19 @@ function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+      <div className="bg-[#162240] rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className={`p-2 rounded-full ${confirmVariant === 'danger' ? 'bg-red-100' : 'bg-blue-100'}`}>
-            <AlertTriangle className={`w-5 h-5 ${confirmVariant === 'danger' ? 'text-red-600' : 'text-blue-600'}`} />
+          <div className={`p-2 rounded-full ${confirmVariant === 'danger' ? 'bg-red-900/50' : 'bg-blue-900/50'}`}>
+            <AlertTriangle className={`w-5 h-5 ${confirmVariant === 'danger' ? 'text-red-400' : 'text-blue-400'}`} />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <h3 className="text-lg font-semibold text-[#F9FAFB]">{title}</h3>
         </div>
-        <p className="text-gray-600 mb-6">{message}</p>
+        <p className="text-[#9CA3AF] mb-6">{message}</p>
         <div className="flex justify-end gap-3">
           <button
             onClick={onCancel}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            className="px-4 py-2 text-sm font-medium text-[#F9FAFB] bg-[#1E3461] rounded-lg hover:bg-[#0F1F3D]"
           >
             Cancel
           </button>
@@ -446,11 +446,11 @@ export function Settings(): React.ReactElement {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0A1835]">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-500 mt-1">
+      <div className="bg-[#162240] border-b border-[#1E3461] px-6 py-4">
+        <h1 className="text-2xl font-semibold text-[#F9FAFB]">Settings</h1>
+        <p className="text-sm text-[#9CA3AF] mt-1">
           Manage your company, team, and billing
         </p>
       </div>
@@ -458,7 +458,7 @@ export function Settings(): React.ReactElement {
       {/* Content with left nav */}
       <div className="flex">
         {/* Left navigation */}
-        <div className="w-52 min-h-[calc(100vh-80px)] bg-white border-r border-gray-200 p-4">
+        <div className="w-52 min-h-[calc(100vh-80px)] bg-[#0F1F3D] border-r border-[#1E3461] p-4">
           <nav className="space-y-1">
             {TABS.map((tab) => (
               <button
@@ -466,8 +466,8 @@ export function Settings(): React.ReactElement {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-blue-900/50 text-blue-400'
+                    : 'text-[#9CA3AF] hover:bg-[#1E3461]'
                 }`}
               >
                 {tab.icon}
@@ -482,18 +482,18 @@ export function Settings(): React.ReactElement {
           {/* Company Profile */}
           {activeTab === 'company' && (
             <div className="max-w-2xl space-y-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">Company Profile</h2>
+              <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                <h2 className="text-lg font-semibold text-[#F9FAFB] mb-6">Company Profile</h2>
 
                 {isLoadingCompany ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                    <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {/* Logo */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-[#F9FAFB] mb-2">
                         Company Logo
                       </label>
                       <div className="flex items-center gap-4">
@@ -501,8 +501,8 @@ export function Settings(): React.ReactElement {
                           {...getLogoRootProps()}
                           className={`w-20 h-20 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer transition-colors ${
                             isLogoDragActive
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-300 hover:border-gray-400'
+                              ? 'border-blue-500 bg-blue-900/20'
+                              : 'border-[#1E3461] hover:border-[#3B82F6]'
                           }`}
                         >
                           <input {...getLogoInputProps()} />
@@ -513,14 +513,14 @@ export function Settings(): React.ReactElement {
                               className="w-full h-full rounded-full object-cover"
                             />
                           ) : isUploadingLogo ? (
-                            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                            <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
                           ) : (
-                            <Upload className="w-6 h-6 text-gray-400" />
+                            <Upload className="w-6 h-6 text-[#6B7280]" />
                           )}
                         </div>
                         <button
                           {...getLogoRootProps()}
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                          className="text-sm text-blue-400 hover:text-blue-300 font-medium"
                         >
                           Change Logo
                         </button>
@@ -530,7 +530,7 @@ export function Settings(): React.ReactElement {
                     {/* Fields */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-[#F9FAFB] mb-1">
                           Company Name
                         </label>
                         <input
@@ -540,12 +540,12 @@ export function Settings(): React.ReactElement {
                             setCompanyName(e.target.value);
                             setHasCompanyChanges(true);
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-[#F9FAFB] mb-1">
                           Industry
                         </label>
                         <input
@@ -556,12 +556,12 @@ export function Settings(): React.ReactElement {
                             setHasCompanyChanges(true);
                           }}
                           placeholder="e.g., SaaS, E-commerce"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] placeholder-[#6B7280] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-[#F9FAFB] mb-1">
                           Timezone
                         </label>
                         <select
@@ -570,7 +570,7 @@ export function Settings(): React.ReactElement {
                             setTimezone(e.target.value);
                             setHasCompanyChanges(true);
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
                         >
                           {TIMEZONES.map((tz) => (
                             <option key={tz} value={tz}>
@@ -581,7 +581,7 @@ export function Settings(): React.ReactElement {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-[#F9FAFB] mb-1">
                           Primary Language
                         </label>
                         <select
@@ -590,7 +590,7 @@ export function Settings(): React.ReactElement {
                             setPrimaryLanguage(e.target.value);
                             setHasCompanyChanges(true);
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
                         >
                           {LANGUAGES.map((lang) => (
                             <option key={lang.code} value={lang.code}>
@@ -620,9 +620,9 @@ export function Settings(): React.ReactElement {
           {/* Team Members */}
           {activeTab === 'team' && (
             <div className="space-y-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-[#F9FAFB]">
                     Team ({teamData?.total || 0} members)
                   </h2>
                   <button
@@ -636,32 +636,32 @@ export function Settings(): React.ReactElement {
 
                 {isLoadingTeam ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                    <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
                   </div>
                 ) : (
                   <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
+                    <thead className="bg-[#0F1F3D] border-b border-[#1E3461]">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase">
                           Member
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase">
                           Role
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase">
                           Status
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase">
                           Last Active
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-[#9CA3AF] uppercase">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody className="divide-y divide-[#1E3461]">
                       {teamData?.members.map((member) => (
-                        <tr key={member.id} className="hover:bg-gray-50">
+                        <tr key={member.id} className="hover:bg-[#0F1F3D]">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
                               <img
@@ -670,8 +670,8 @@ export function Settings(): React.ReactElement {
                                 className="w-8 h-8 rounded-full"
                               />
                               <div>
-                                <p className="font-medium text-gray-900">{member.name}</p>
-                                <p className="text-sm text-gray-500">{member.email}</p>
+                                <p className="font-medium text-[#F9FAFB]">{member.name}</p>
+                                <p className="text-sm text-[#9CA3AF]">{member.email}</p>
                               </div>
                             </div>
                           </td>
@@ -679,7 +679,7 @@ export function Settings(): React.ReactElement {
                             <select
                               value={member.role}
                               onChange={(e) => handleRoleChange(member.id, e.target.value)}
-                              className="text-sm border border-gray-300 rounded px-2 py-1"
+                              className="text-sm bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] rounded px-2 py-1"
                             >
                               <option value="agent">Agent</option>
                               <option value="manager">Manager</option>
@@ -689,7 +689,7 @@ export function Settings(): React.ReactElement {
                           <td className="px-4 py-3">
                             <StatusBadge status={member.status} />
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">
+                          <td className="px-4 py-3 text-sm text-[#9CA3AF]">
                             {member.lastActive
                               ? new Date(member.lastActive).toLocaleDateString()
                               : 'Never'}
@@ -697,7 +697,7 @@ export function Settings(): React.ReactElement {
                           <td className="px-4 py-3 text-right">
                             <button
                               onClick={() => setMemberToRemove(member)}
-                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                              className="p-1.5 text-[#6B7280] hover:text-red-400 hover:bg-red-900/30 rounded"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -716,20 +716,20 @@ export function Settings(): React.ReactElement {
             <div className="max-w-3xl space-y-6">
               {isLoadingBilling ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                  <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
                 </div>
               ) : (
                 <>
                   {/* Current Plan */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h2 className="text-lg font-semibold text-gray-900">Current Plan</h2>
-                        <p className="text-2xl font-bold text-gray-900 mt-1">
+                        <h2 className="text-lg font-semibold text-[#F9FAFB]">Current Plan</h2>
+                        <p className="text-2xl font-bold text-[#F9FAFB] mt-1">
                           {billingData?.billing.plan.charAt(0).toUpperCase() + billingData?.billing.plan.slice(1)}
                         </p>
                         {billingData?.billing.nextChargeDate && (
-                          <p className="text-sm text-gray-500 mt-1">
+                          <p className="text-sm text-[#9CA3AF] mt-1">
                             Renews on {new Date(billingData.billing.nextChargeDate).toLocaleDateString()}
                             {billingData.billing.nextChargeAmount && (
                               <> · ${billingData.billing.nextChargeAmount}/month</>
@@ -753,8 +753,8 @@ export function Settings(): React.ReactElement {
                   </div>
 
                   {/* Usage */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Usage This Period</h2>
+                  <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                    <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Usage This Period</h2>
                     <div className="space-y-4">
                       <UsageBar
                         label="Voice Minutes"
@@ -771,25 +771,25 @@ export function Settings(): React.ReactElement {
 
                   {/* Payment Method */}
                   {billingData?.billing.paymentMethod && (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                      <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment Method</h2>
+                    <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                      <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Payment Method</h2>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-8 bg-gray-100 rounded flex items-center justify-center text-xs font-bold text-gray-600">
+                          <div className="w-12 h-8 bg-[#0F1F3D] rounded flex items-center justify-center text-xs font-bold text-[#9CA3AF]">
                             {billingData.billing.paymentMethod.brand?.toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-[#F9FAFB]">
                               •••• {billingData.billing.paymentMethod.last4}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-[#9CA3AF]">
                               Expires {billingData.billing.paymentMethod.expMonth}/{billingData.billing.paymentMethod.expYear}
                             </p>
                           </div>
                         </div>
                         <button
                           onClick={handleManagePlan}
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                          className="text-sm text-blue-400 hover:text-blue-300 font-medium"
                         >
                           Update
                         </button>
@@ -798,35 +798,35 @@ export function Settings(): React.ReactElement {
                   )}
 
                   {/* Invoices */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Invoices</h2>
+                  <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                    <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Recent Invoices</h2>
                     {billingData?.billing.invoices.length === 0 ? (
-                      <p className="text-gray-500">No invoices yet</p>
+                      <p className="text-[#9CA3AF]">No invoices yet</p>
                     ) : (
                       <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-200">
+                        <thead className="bg-[#0F1F3D] border-b border-[#1E3461]">
                           <tr>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                            <th className="px-4 py-2 text-left text-xs font-medium text-[#9CA3AF]">
                               Date
                             </th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                            <th className="px-4 py-2 text-left text-xs font-medium text-[#9CA3AF]">
                               Amount
                             </th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                            <th className="px-4 py-2 text-left text-xs font-medium text-[#9CA3AF]">
                               Status
                             </th>
-                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">
+                            <th className="px-4 py-2 text-right text-xs font-medium text-[#9CA3AF]">
                               Download
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200">
+                        <tbody className="divide-y divide-[#1E3461]">
                           {billingData?.billing.invoices.map((invoice) => (
                             <tr key={invoice.id}>
-                              <td className="px-4 py-2 text-sm text-gray-900">
+                              <td className="px-4 py-2 text-sm text-[#F9FAFB]">
                                 {new Date(invoice.date).toLocaleDateString()}
                               </td>
-                              <td className="px-4 py-2 text-sm text-gray-900">
+                              <td className="px-4 py-2 text-sm text-[#F9FAFB]">
                                 ${invoice.amount.toFixed(2)}
                               </td>
                               <td className="px-4 py-2">
@@ -838,7 +838,7 @@ export function Settings(): React.ReactElement {
                                     href={invoice.pdfUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-700"
+                                    className="text-blue-400 hover:text-blue-300"
                                   >
                                     <Download className="w-4 h-4" />
                                   </a>
@@ -859,32 +859,32 @@ export function Settings(): React.ReactElement {
           {activeTab === 'security' && (
             <div className="max-w-2xl space-y-6">
               {/* API Keys */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">API Keys</h2>
+              <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">API Keys</h2>
 
                 {newApiKeys && (
-                  <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm font-medium text-green-800 mb-2">
+                  <div className="mb-4 p-4 bg-green-900/30 border border-green-700 rounded-lg">
+                    <p className="text-sm font-medium text-green-400 mb-2">
                       ⚠️ Save these keys now - they will not be shown again!
                     </p>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Secret Key:</span>
-                        <code className="text-sm bg-white px-2 py-1 rounded">{newApiKeys.secretKey}</code>
+                        <span className="text-sm text-[#9CA3AF]">Secret Key:</span>
+                        <code className="text-sm bg-[#0A1835] text-[#F9FAFB] px-2 py-1 rounded">{newApiKeys.secretKey}</code>
                         <button
                           onClick={() => copyToClipboard(newApiKeys.secretKey!)}
-                          className="p-1 text-gray-400 hover:text-gray-600"
+                          className="p-1 text-[#6B7280] hover:text-[#9CA3AF]"
                         >
                           <Copy className="w-4 h-4" />
                         </button>
                       </div>
                       {newApiKeys.webhookSecret && (
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600">Webhook Secret:</span>
-                          <code className="text-sm bg-white px-2 py-1 rounded">{newApiKeys.webhookSecret}</code>
+                          <span className="text-sm text-[#9CA3AF]">Webhook Secret:</span>
+                          <code className="text-sm bg-[#0A1835] text-[#F9FAFB] px-2 py-1 rounded">{newApiKeys.webhookSecret}</code>
                           <button
                             onClick={() => copyToClipboard(newApiKeys.webhookSecret!)}
-                            className="p-1 text-gray-400 hover:text-gray-600"
+                            className="p-1 text-[#6B7280] hover:text-[#9CA3AF]"
                           >
                             <Copy className="w-4 h-4" />
                           </button>
@@ -895,13 +895,13 @@ export function Settings(): React.ReactElement {
                 )}
 
                 {isLoadingApiKeys ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                  <Loader2 className="w-5 h-5 animate-spin text-[#6B7280]" />
                 ) : (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-[#0F1F3D] rounded-lg">
                       <div>
-                        <p className="text-sm font-medium text-gray-700">API Key</p>
-                        <code className="text-sm text-gray-600">
+                        <p className="text-sm font-medium text-[#F9FAFB]">API Key</p>
+                        <code className="text-sm text-[#9CA3AF]">
                           {apiKeysData?.apiKeys.publicKey || 'Not generated'}
                         </code>
                       </div>
@@ -909,7 +909,7 @@ export function Settings(): React.ReactElement {
                         {apiKeysData?.apiKeys.publicKey && (
                           <button
                             onClick={() => copyToClipboard(apiKeysData.apiKeys.publicKey!)}
-                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded"
+                            className="p-2 text-[#6B7280] hover:text-[#9CA3AF] hover:bg-[#1E3461] rounded"
                           >
                             <Copy className="w-4 h-4" />
                           </button>
@@ -917,10 +917,10 @@ export function Settings(): React.ReactElement {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-[#0F1F3D] rounded-lg">
                       <div>
-                        <p className="text-sm font-medium text-gray-700">Webhook Secret</p>
-                        <code className="text-sm text-gray-600">
+                        <p className="text-sm font-medium text-[#F9FAFB]">Webhook Secret</p>
+                        <code className="text-sm text-[#9CA3AF]">
                           {apiKeysData?.apiKeys.webhookSecret || 'Not generated'}
                         </code>
                       </div>
@@ -928,7 +928,7 @@ export function Settings(): React.ReactElement {
 
                     <button
                       onClick={() => setShowRegenerateConfirm(true)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#F9FAFB] bg-[#1E3461] rounded-lg hover:bg-[#0F1F3D]"
                     >
                       <RefreshCw className="w-4 h-4" />
                       Regenerate Keys
@@ -938,20 +938,20 @@ export function Settings(): React.ReactElement {
               </div>
 
               {/* Security Settings */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Security Settings</h2>
+              <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Security Settings</h2>
 
                 <div className="space-y-6">
                   {/* 2FA Toggle */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">Require Two-Factor Authentication</p>
-                      <p className="text-sm text-gray-500">Require all team members to enable 2FA</p>
+                      <p className="font-medium text-[#F9FAFB]">Require Two-Factor Authentication</p>
+                      <p className="text-sm text-[#9CA3AF]">Require all team members to enable 2FA</p>
                     </div>
                     <button
                       onClick={() => setTwoFactorRequired(!twoFactorRequired)}
                       className={`relative w-12 h-6 rounded-full transition-colors ${
-                        twoFactorRequired ? 'bg-blue-600' : 'bg-gray-200'
+                        twoFactorRequired ? 'bg-blue-600' : 'bg-[#1E3461]'
                       }`}
                     >
                       <span
@@ -964,13 +964,13 @@ export function Settings(): React.ReactElement {
 
                   {/* Session Timeout */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[#F9FAFB] mb-1">
                       Session Timeout
                     </label>
                     <select
                       value={sessionTimeout}
                       onChange={(e) => setSessionTimeout(Number(e.target.value))}
-                      className="w-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-48 px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
                     >
                       {SESSION_TIMEOUTS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -982,13 +982,13 @@ export function Settings(): React.ReactElement {
 
                   {/* Data Retention */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[#F9FAFB] mb-1">
                       Call Recordings Retention
                     </label>
                     <select
                       value={dataRetention}
                       onChange={(e) => setDataRetention(Number(e.target.value))}
-                      className="w-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-48 px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
                     >
                       {RETENTION_PERIODS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -1010,15 +1010,15 @@ export function Settings(): React.ReactElement {
               </div>
 
               {/* GDPR Export */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">Data Export</h2>
-                <p className="text-sm text-gray-500 mb-4">
+              <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                <h2 className="text-lg font-semibold text-[#F9FAFB] mb-2">Data Export</h2>
+                <p className="text-sm text-[#9CA3AF] mb-4">
                   Export all your company data for compliance or backup purposes.
                 </p>
                 <button
                   onClick={handleExportData}
                   disabled={isExporting}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#F9FAFB] bg-[#1E3461] rounded-lg hover:bg-[#0F1F3D] disabled:opacity-50"
                 >
                   {isExporting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

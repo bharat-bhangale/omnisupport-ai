@@ -31,14 +31,14 @@ interface StatCardProps {
 
 function StatCard({ title, value, subtitle, icon, trend }: StatCardProps): React.ReactElement {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <div className="bg-[#162240] rounded-xl border border-[#1E3461] p-5 shadow-sm">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-50 rounded-lg text-blue-600">{icon}</div>
+          <div className="p-2.5 bg-blue-900/50 rounded-lg text-blue-400">{icon}</div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-            {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+            <p className="text-sm text-[#9CA3AF] font-medium">{title}</p>
+            <p className="text-2xl font-bold text-[#F9FAFB]">{value}</p>
+            {subtitle && <p className="text-xs text-[#6B7280] mt-0.5">{subtitle}</p>}
           </div>
         </div>
         {trend && (
@@ -72,16 +72,16 @@ export function AgentStats(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-[#0A1835] p-6">
         <div className="max-w-6xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-48 mb-6" />
+            <div className="h-8 bg-[#1E3461] rounded w-48 mb-6" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-28 bg-gray-200 rounded-xl" />
+                <div key={i} className="h-28 bg-[#1E3461] rounded-xl" />
               ))}
             </div>
-            <div className="h-64 bg-gray-200 rounded-xl" />
+            <div className="h-64 bg-[#1E3461] rounded-xl" />
           </div>
         </div>
       </div>
@@ -90,10 +90,10 @@ export function AgentStats(): React.ReactElement {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0A1835] p-6 flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <p className="text-gray-600">Failed to load agent statistics</p>
+          <p className="text-[#9CA3AF]">Failed to load agent statistics</p>
         </div>
       </div>
     );
@@ -116,12 +116,12 @@ export function AgentStats(): React.ReactElement {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[#0A1835] p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">My AI Assistance Stats</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-[#F9FAFB]">My AI Assistance Stats</h1>
+          <p className="text-[#9CA3AF] mt-1">
             Track your performance and AI draft usage metrics
           </p>
         </div>
@@ -157,22 +157,23 @@ export function AgentStats(): React.ReactElement {
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Draft Usage Chart */}
-          <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="lg:col-span-2 bg-[#162240] rounded-xl border border-[#1E3461] p-5 shadow-sm">
+            <h3 className="text-lg font-semibold text-[#F9FAFB] mb-4">
               AI Draft Usage by Day
             </h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1E3461" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '1px solid #e5e7eb',
+                      backgroundColor: '#162240',
+                      border: '1px solid #1E3461',
                       borderRadius: '8px',
                       fontSize: '12px',
+                      color: '#F9FAFB',
                     }}
                   />
                   <Bar
@@ -193,13 +194,13 @@ export function AgentStats(): React.ReactElement {
           </div>
 
           {/* Top Issues */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-[#162240] rounded-xl border border-[#1E3461] p-5 shadow-sm">
+            <h3 className="text-lg font-semibold text-[#F9FAFB] mb-4">
               Top AI Issues Flagged
             </h3>
             {topIssues.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 text-sm">
-                <Sparkles className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+              <div className="text-center py-8 text-[#9CA3AF] text-sm">
+                <Sparkles className="w-8 h-8 mx-auto mb-2 text-[#6B7280]" />
                 No issues flagged yet
               </div>
             ) : (
@@ -210,12 +211,12 @@ export function AgentStats(): React.ReactElement {
                     className="flex items-center justify-between text-sm"
                   >
                     <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-xs font-medium">
+                      <span className="w-5 h-5 rounded-full bg-[#0F1F3D] text-[#9CA3AF] flex items-center justify-center text-xs font-medium">
                         {idx + 1}
                       </span>
-                      <span className="text-gray-700">{issue.label}</span>
+                      <span className="text-[#F9FAFB]">{issue.label}</span>
                     </div>
-                    <span className="text-gray-500">{issue.count}</span>
+                    <span className="text-[#9CA3AF]">{issue.count}</span>
                   </li>
                 ))}
               </ul>

@@ -15,6 +15,7 @@ import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import CallMonitor from './pages/CallMonitor';
 import TicketQueue from './pages/TicketQueue';
+import TicketDetail from './pages/TicketDetail';
 import Escalations from './pages/Escalations';
 import KnowledgeBase from './pages/KnowledgeBase';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
@@ -170,6 +171,16 @@ export default function App() {
               <ProtectedRoute>
                 <Layout>
                   <TicketQueue />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tickets/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <TicketDetail />
                 </Layout>
               </ProtectedRoute>
             }

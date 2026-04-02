@@ -511,13 +511,13 @@ export default function Escalations(): React.ReactElement {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-[#0A1835]">
       {/* Alert Banner */}
       {stats.waitingCount > 0 && (
-        <div className="bg-amber-100 border-b border-amber-200 px-4 py-3 flex items-center justify-between">
+        <div className="bg-amber-500/20 border-b border-amber-500/30 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 animate-pulse" />
-            <span className="font-medium text-amber-800">
+            <AlertTriangle className="w-5 h-5 text-amber-400 animate-pulse" />
+            <span className="font-medium text-amber-300">
               ■ {stats.waitingCount} {stats.waitingCount === 1 ? 'call' : 'calls'} waiting
               {stats.longestHoldSeconds > 0 && (
                 <span className="ml-2">
@@ -529,7 +529,7 @@ export default function Escalations(): React.ReactElement {
           <button
             onClick={handleAcceptNext}
             disabled={acceptingId === 'next'}
-            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white font-medium rounded-lg flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/50 text-white font-medium rounded-lg flex items-center gap-2 transition-colors"
           >
             {acceptingId === 'next' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -544,13 +544,13 @@ export default function Escalations(): React.ReactElement {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel - Queue (55%) */}
-        <div className="w-[55%] border-r border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-900">Escalation Queue</h1>
+        <div className="w-[55%] border-r border-[#1E3461] flex flex-col">
+          <div className="p-4 border-b border-[#1E3461] flex items-center justify-between">
+            <h1 className="text-xl font-bold text-[#F9FAFB]">Escalation Queue</h1>
             <button
               onClick={() => refetch()}
               disabled={isFetching}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#1E3461] rounded-lg transition-colors"
             >
               <RefreshCw className={`w-5 h-5 ${isFetching ? 'animate-spin' : ''}`} />
             </button>
@@ -558,7 +558,7 @@ export default function Escalations(): React.ReactElement {
 
           <div className="flex-1 overflow-y-auto p-4">
             {escalations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <div className="flex flex-col items-center justify-center h-full text-[#9CA3AF]">
                 <Phone className="w-12 h-12 mb-3 opacity-50" />
                 <p className="text-lg font-medium">No active escalations</p>
                 <p className="text-sm">New calls will appear here</p>
@@ -581,7 +581,7 @@ export default function Escalations(): React.ReactElement {
         </div>
 
         {/* Right Panel - Context (45%) */}
-        <div className="w-[45%] bg-white">
+        <div className="w-[45%] bg-[#162240]">
           {selectedEscalation ? (
             <ContextPanel
               escalation={selectedEscalation}
@@ -591,12 +591,12 @@ export default function Escalations(): React.ReactElement {
               isResolving={isResolving}
             />
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400">
+            <div className="h-full flex flex-col items-center justify-center text-[#6B7280]">
               <MessageSquare className="w-12 h-12 mb-3 opacity-50" />
               <p className="text-lg font-medium">Select an escalation</p>
               <p className="text-sm">to view context</p>
             </div>
-          )}
+          )}}
         </div>
       </div>
     </div>

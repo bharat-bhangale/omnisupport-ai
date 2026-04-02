@@ -83,29 +83,29 @@ export default function Integrations() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[#0A1835] p-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <Plug className="h-8 w-8 text-indigo-600" />
+            <h1 className="text-3xl font-bold text-[#F9FAFB] flex items-center gap-3">
+              <Plug className="h-8 w-8 text-indigo-400" />
               Integrations
             </h1>
-            <p className="mt-1 text-gray-600">
+            <p className="mt-1 text-[#9CA3AF]">
               Connect your favorite tools to enhance your support workflow
             </p>
           </div>
           <div className="flex items-center gap-3">
             {data && (
-              <span className="text-sm text-gray-600">
-                <span className="font-semibold text-green-600">{data.stats.active}</span> of{' '}
+              <span className="text-sm text-[#9CA3AF]">
+                <span className="font-semibold text-green-400">{data.stats.active}</span> of{' '}
                 {data.stats.total} active
               </span>
             )}
             <button
               onClick={() => refetch()}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2 text-[#F9FAFB] bg-[#162240] border border-[#1E3461] rounded-lg hover:bg-[#0F1F3D]"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -116,15 +116,15 @@ export default function Integrations() {
 
       {/* Category Filter Tabs */}
       <div className="mb-6">
-        <div className="flex gap-2 border-b border-gray-200">
+        <div className="flex gap-2 border-b border-[#1E3461]">
           {categories.map((cat) => (
             <button
               key={cat.value}
               onClick={() => setCategoryFilter(cat.value)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 categoryFilter === cat.value
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-indigo-400 text-indigo-400'
+                  : 'border-transparent text-[#9CA3AF] hover:text-[#F9FAFB]'
               }`}
             >
               {cat.label}
@@ -136,7 +136,7 @@ export default function Integrations() {
       {/* Loading State */}
       {isLoading && (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
         </div>
       )}
 
@@ -195,17 +195,17 @@ function IntegrationCard({
   const statusConfig = {
     connected: {
       icon: CheckCircle2,
-      color: 'text-green-600 bg-green-50',
+      color: 'text-green-400 bg-green-900/30',
       label: 'Connected',
     },
     disconnected: {
       icon: XCircle,
-      color: 'text-gray-500 bg-gray-50',
+      color: 'text-[#9CA3AF] bg-[#0F1F3D]',
       label: 'Disconnected',
     },
     needs_reauth: {
       icon: AlertTriangle,
-      color: 'text-amber-600 bg-amber-50',
+      color: 'text-amber-400 bg-amber-900/30',
       label: 'Needs Reauth',
     },
   };
@@ -216,20 +216,20 @@ function IntegrationCard({
   return (
     <div
       onClick={() => onSelect(integration.name)}
-      className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer"
+      className="bg-[#162240] rounded-xl border border-[#1E3461] p-6 hover:shadow-lg transition-shadow cursor-pointer"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           {/* Logo placeholder */}
           <div
-            className={`w-12 h-12 rounded-lg ${integrationColors[integration.name] || 'bg-gray-400'} flex items-center justify-center text-white font-bold text-lg`}
+            className={`w-12 h-12 rounded-lg ${integrationColors[integration.name] || 'bg-gray-600'} flex items-center justify-center text-white font-bold text-lg`}
           >
             {integration.displayName.charAt(0)}
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">{integration.displayName}</h3>
-            <span className="text-xs text-gray-500 capitalize px-2 py-0.5 bg-gray-100 rounded">
+            <h3 className="font-semibold text-[#F9FAFB]">{integration.displayName}</h3>
+            <span className="text-xs text-[#9CA3AF] capitalize px-2 py-0.5 bg-[#0F1F3D] rounded">
               {integration.category}
             </span>
           </div>
@@ -241,14 +241,14 @@ function IntegrationCard({
       </div>
 
       {/* Description */}
-      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{integration.description}</p>
+      <p className="text-sm text-[#9CA3AF] mb-4 line-clamp-2">{integration.description}</p>
 
       {/* Data Flow Chips */}
       <div className="flex flex-wrap gap-2 mb-4">
         {integration.dataFlows.map((flow) => (
           <span
             key={flow}
-            className="flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded"
+            className="flex items-center gap-1 text-xs text-[#9CA3AF] bg-[#0F1F3D] px-2 py-1 rounded"
           >
             {flow === 'webhooks' || flow === 'notifications' || flow === 'emails' ? (
               <ArrowRight className="h-3 w-3" />
@@ -263,7 +263,7 @@ function IntegrationCard({
       {/* Actions */}
       {integration.status === 'connected' ? (
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500 flex items-center gap-1">
+          <span className="text-xs text-[#9CA3AF] flex items-center gap-1">
             <Clock className="h-3 w-3" />
             Last sync: {integration.lastSync || 'Never'}
           </span>
@@ -271,7 +271,7 @@ function IntegrationCard({
             <button
               onClick={handleSync}
               disabled={isSyncing}
-              className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              className="p-2 text-[#9CA3AF] hover:text-indigo-400 hover:bg-indigo-900/30 rounded-lg transition-colors"
             >
               <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
             </button>
@@ -280,7 +280,7 @@ function IntegrationCard({
                 e.stopPropagation();
                 onSelect(integration.name);
               }}
-              className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              className="p-2 text-[#9CA3AF] hover:text-indigo-400 hover:bg-indigo-900/30 rounded-lg transition-colors"
             >
               <Settings className="h-4 w-4" />
             </button>
@@ -351,32 +351,32 @@ function ConnectModal({
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
 
         {/* Modal */}
-        <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <div className="relative bg-[#162240] rounded-xl shadow-xl max-w-md w-full p-6">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            className="absolute top-4 right-4 text-[#6B7280] hover:text-[#9CA3AF]"
           >
             <X className="h-5 w-5" />
           </button>
 
           <div className="flex items-center gap-3 mb-6">
             <div
-              className={`w-12 h-12 rounded-lg ${integrationColors[integrationName] || 'bg-gray-400'} flex items-center justify-center text-white font-bold text-lg`}
+              className={`w-12 h-12 rounded-lg ${integrationColors[integrationName] || 'bg-gray-600'} flex items-center justify-center text-white font-bold text-lg`}
             >
               {integration?.displayName?.charAt(0) || integrationName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-[#F9FAFB]">
                 Connect {integration?.displayName || integrationName}
               </h2>
-              <p className="text-sm text-gray-500">Enter your credentials</p>
+              <p className="text-sm text-[#9CA3AF]">Enter your credentials</p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {integration?.fields.map((field) => (
               <div key={field}>
-                <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+                <label className="block text-sm font-medium text-[#F9FAFB] mb-1 capitalize">
                   {field.replace(/([A-Z])/g, ' $1').trim()}
                 </label>
                 <div className="relative">
@@ -384,7 +384,7 @@ function ConnectModal({
                     type={isSecretField(field) && !showSecrets[field] ? 'password' : 'text'}
                     value={formData[field] || ''}
                     onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] placeholder-[#6B7280] rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     placeholder={`Enter ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`}
                     required
                   />
@@ -394,7 +394,7 @@ function ConnectModal({
                       onClick={() =>
                         setShowSecrets({ ...showSecrets, [field]: !showSecrets[field] })
                       }
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#9CA3AF]"
                     >
                       {showSecrets[field] ? (
                         <EyeOff className="h-4 w-4" />
@@ -411,7 +411,7 @@ function ConnectModal({
             {testResult && (
               <div
                 className={`p-3 rounded-lg flex items-center gap-2 ${
-                  testResult.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                  testResult.ok ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
                 }`}
               >
                 {testResult.ok ? (
@@ -433,7 +433,7 @@ function ConnectModal({
                 type="button"
                 onClick={handleTest}
                 disabled={isTesting || Object.keys(formData).length === 0}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-[#1E3461] text-[#F9FAFB] rounded-lg hover:bg-[#0F1F3D] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isTesting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -512,36 +512,36 @@ function DetailPanel({
       <div className="fixed inset-0 bg-black/30" onClick={onClose} />
 
       {/* Slide-in Panel */}
-      <div className="relative w-full max-w-lg bg-white shadow-xl overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Integration Details</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+      <div className="relative w-full max-w-lg bg-[#162240] shadow-xl overflow-y-auto">
+        <div className="sticky top-0 bg-[#162240] border-b border-[#1E3461] p-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-[#F9FAFB]">Integration Details</h2>
+          <button onClick={onClose} className="text-[#6B7280] hover:text-[#9CA3AF]">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
           </div>
         ) : integration ? (
           <div className="p-6 space-y-6">
             {/* Header */}
             <div className="flex items-center gap-4">
               <div
-                className={`w-16 h-16 rounded-xl ${integrationColors[integrationName] || 'bg-gray-400'} flex items-center justify-center text-white font-bold text-2xl`}
+                className={`w-16 h-16 rounded-xl ${integrationColors[integrationName] || 'bg-gray-600'} flex items-center justify-center text-white font-bold text-2xl`}
               >
                 {integration.displayName.charAt(0)}
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">{integration.displayName}</h3>
+                <h3 className="text-xl font-bold text-[#F9FAFB]">{integration.displayName}</h3>
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                     integration.status === 'connected'
-                      ? 'text-green-600 bg-green-50'
+                      ? 'text-green-400 bg-green-900/30'
                       : integration.status === 'needs_reauth'
-                        ? 'text-amber-600 bg-amber-50'
-                        : 'text-gray-500 bg-gray-50'
+                        ? 'text-amber-400 bg-amber-900/30'
+                        : 'text-[#9CA3AF] bg-[#0F1F3D]'
                   }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-current" />
@@ -555,23 +555,23 @@ function DetailPanel({
             </div>
 
             {/* Description */}
-            <p className="text-gray-600">{integration.description}</p>
+            <p className="text-[#9CA3AF]">{integration.description}</p>
 
             {/* Credentials */}
             {integration.status === 'connected' && integration.credentials && (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Credentials</h4>
+              <div className="bg-[#0F1F3D] rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-[#F9FAFB] mb-3">Credentials</h4>
                 <div className="space-y-2">
                   {Object.entries(integration.credentials).map(([key, value]) => (
                     <div key={key} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500 capitalize">
+                      <span className="text-[#9CA3AF] capitalize">
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </span>
-                      <span className="font-mono text-gray-700">{value}</span>
+                      <span className="font-mono text-[#F9FAFB]">{value}</span>
                     </div>
                   ))}
                 </div>
-                <button className="mt-3 text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                <button className="mt-3 text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
                   <Settings className="h-4 w-4" />
                   Edit Credentials
                 </button>
@@ -580,12 +580,12 @@ function DetailPanel({
 
             {/* Sync Configuration */}
             {integration.status === 'connected' && integration.syncConfig && (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Sync Configuration</h4>
+              <div className="bg-[#0F1F3D] rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-[#F9FAFB] mb-3">Sync Configuration</h4>
                 <div className="space-y-2">
                   {Object.entries(integration.syncConfig).map(([key, enabled]) => (
                     <div key={key} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 capitalize">
+                      <span className="text-sm text-[#9CA3AF] capitalize">
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </span>
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -595,7 +595,7 @@ function DetailPanel({
                           className="sr-only peer"
                           readOnly
                         />
-                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div className="w-9 h-5 bg-[#1E3461] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#1E3461] after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
                       </label>
                     </div>
                   ))}
@@ -605,11 +605,11 @@ function DetailPanel({
 
             {/* Health Status */}
             {integration.status === 'connected' && integration.health && (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Connection Health</h4>
+              <div className="bg-[#0F1F3D] rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-[#F9FAFB] mb-3">Connection Health</h4>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Status</span>
+                    <span className="text-sm text-[#9CA3AF]">Status</span>
                     <span
                       className={`px-2 py-0.5 rounded text-xs font-medium ${
                         healthStatusConfig[integration.health.status]?.bg
@@ -621,10 +621,10 @@ function DetailPanel({
                   {/* API Usage Bar */}
                   <div>
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-gray-600">API Usage</span>
-                      <span className="text-gray-700">67%</span>
+                      <span className="text-[#9CA3AF]">API Usage</span>
+                      <span className="text-[#F9FAFB]">67%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-[#1E3461] rounded-full h-2">
                       <div
                         className="bg-indigo-600 h-2 rounded-full"
                         style={{ width: '67%' }}
@@ -639,7 +639,7 @@ function DetailPanel({
             {testResult && (
               <div
                 className={`p-3 rounded-lg flex items-center gap-2 ${
-                  testResult.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                  testResult.ok ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
                 }`}
               >
                 {testResult.ok ? (
@@ -657,13 +657,13 @@ function DetailPanel({
             )}
 
             {/* Actions */}
-            <div className="space-y-3 pt-4 border-t border-gray-200">
+            <div className="space-y-3 pt-4 border-t border-[#1E3461]">
               {integration.status === 'connected' && (
                 <>
                   <button
                     onClick={handleTest}
                     disabled={isTesting}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-[#1E3461] text-[#F9FAFB] rounded-lg hover:bg-[#0F1F3D]"
                   >
                     {isTesting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -675,7 +675,7 @@ function DetailPanel({
                   <button
                     onClick={handleDisconnect}
                     disabled={isDisconnecting}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-red-700 text-red-400 rounded-lg hover:bg-red-900/30"
                   >
                     {isDisconnecting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -692,7 +692,7 @@ function DetailPanel({
                 href={`https://${integrationName}.com`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 text-indigo-600 hover:text-indigo-700"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 text-indigo-400 hover:text-indigo-300"
               >
                 <ExternalLink className="h-4 w-4" />
                 View {integration.displayName} Documentation
@@ -700,7 +700,7 @@ function DetailPanel({
             </div>
           </div>
         ) : (
-          <div className="p-6 text-center text-gray-500">Integration not found</div>
+          <div className="p-6 text-center text-[#9CA3AF]">Integration not found</div>
         )}
       </div>
     </div>

@@ -133,22 +133,22 @@ export default function LearningInsights() {
   })) || [];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[#0A1835] p-6">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-[#F9FAFB] flex items-center gap-3">
               <Brain className="h-8 w-8 text-purple-600" />
               Learning & Insights
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-[#9CA3AF] mt-1">
               Continuous improvement through AI feedback and gap analysis
             </p>
           </div>
           <button
             onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2 bg-[#162240] border border-[#1E3461] rounded-lg hover:bg-[#0F1F3D]"
           >
             <RefreshCw className="h-4 w-4" />
             Refresh
@@ -157,23 +157,23 @@ export default function LearningInsights() {
       </div>
 
       {/* Week Summary Banner */}
-      <div className="mb-6 bg-purple-50 border border-purple-200 rounded-xl p-4">
-        <div className="flex items-center gap-6 text-purple-900">
+      <div className="mb-6 bg-purple-900/20 border border-purple-500/30 rounded-xl p-4">
+        <div className="flex items-center gap-6 text-purple-300">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-purple-600" />
+            <Sparkles className="h-5 w-5 text-purple-400" />
             <span className="font-medium">This Week Summary</span>
           </div>
           <div className="flex-1 flex items-center gap-6 text-sm">
             <span>{stats.gapsIdentified} gaps identified</span>
-            <span className="text-purple-400">|</span>
+            <span className="text-purple-600">|</span>
             <span>{stats.gapsResolved} resolved</span>
-            <span className="text-purple-400">|</span>
+            <span className="text-purple-600">|</span>
             <span>{stats.feedbackEvents} feedback events</span>
-            <span className="text-purple-400">|</span>
+            <span className="text-purple-600">|</span>
             <span>{stats.abTests} A/B tests</span>
           </div>
           {report?.weekLabel && (
-            <div className="text-sm text-purple-600 flex items-center gap-1">
+            <div className="text-sm text-purple-400 flex items-center gap-1">
               <Calendar className="h-4 w-4" />
               {report.weekLabel}
             </div>
@@ -182,7 +182,7 @@ export default function LearningInsights() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200">
+      <div className="mb-6 border-b border-[#1E3461]">
         <nav className="flex gap-6">
           <TabButton
             active={activeTab === 'gaps'}
@@ -266,14 +266,14 @@ function TabButton({
       className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
         active
           ? 'border-purple-600 text-purple-600'
-          : 'border-transparent text-gray-500 hover:text-gray-700'
+          : 'border-transparent text-[#9CA3AF] hover:text-[#F9FAFB]'
       }`}
     >
       {icon}
       <span className="font-medium">{label}</span>
       {badge !== undefined && badge > 0 && (
         <span className={`px-2 py-0.5 text-xs rounded-full ${
-          active ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+          active ? 'bg-purple-100 text-purple-700' : 'bg-[#1E3461] text-[#9CA3AF]'
         }`}>
           {badge}
         </span>
@@ -313,40 +313,40 @@ function KBGapsTab({
     <div className="space-y-6">
       {/* Title */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">
+        <h2 className="text-lg font-semibold text-[#F9FAFB]">
           Top Unanswered Queries This Week
         </h2>
       </div>
 
       {/* Open Gaps Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-[#162240] rounded-xl shadow-sm border border-[#1E3461] overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-[#0F1F3D] border-b border-[#1E3461]">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase">
                 Rank
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase">
                 Query
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-center text-xs font-medium text-[#9CA3AF] uppercase">
                 Times Asked
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-center text-xs font-medium text-[#9CA3AF] uppercase">
                 Channel
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase">
                 First Asked
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-center text-xs font-medium text-[#9CA3AF] uppercase">
                 Action
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-[#1E3461]">
             {openGaps.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-[#9CA3AF]">
                   No unanswered queries found 🎉
                 </td>
               </tr>
@@ -370,33 +370,33 @@ function KBGapsTab({
       </div>
 
       {/* Resolved Gaps Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-[#162240] rounded-xl shadow-sm border border-[#1E3461] overflow-hidden">
         <button
           onClick={onToggleResolved}
-          className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50"
+          className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#0F1F3D]"
         >
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-sm font-medium text-[#F9FAFB]">
             Resolved This Week ({resolvedGaps.length})
           </span>
           {showResolvedGaps ? (
-            <ChevronDown className="h-4 w-4 text-gray-400" />
+            <ChevronDown className="h-4 w-4 text-[#6B7280]" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-gray-400" />
+            <ChevronRight className="h-4 w-4 text-[#6B7280]" />
           )}
         </button>
         {showResolvedGaps && (
-          <div className="border-t border-gray-200">
+          <div className="border-t border-[#1E3461]">
             {resolvedGaps.length === 0 ? (
-              <div className="px-4 py-4 text-center text-gray-500 text-sm">
+              <div className="px-4 py-4 text-center text-[#9CA3AF] text-sm">
                 No resolved gaps yet
               </div>
             ) : (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-[#1E3461]">
                 {resolvedGaps.map((gap) => (
                   <li key={gap._id} className="px-4 py-3 flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="text-sm text-gray-700 line-clamp-1">{gap.query}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-sm text-[#F9FAFB] line-clamp-1">{gap.query}</p>
+                      <p className="text-xs text-[#6B7280] mt-0.5">
                         Resolved {new Date(gap.resolution?.resolvedAt || '').toLocaleDateString()}
                       </p>
                     </div>
@@ -433,9 +433,9 @@ function GapRow({
 }) {
   return (
     <>
-      <tr className={isExpanded ? 'bg-purple-50' : 'hover:bg-gray-50'}>
-        <td className="px-4 py-3 text-sm font-medium text-gray-500">#{rank}</td>
-        <td className="px-4 py-3 text-sm text-gray-900 max-w-md">
+      <tr className={isExpanded ? 'bg-purple-900/20' : 'hover:bg-[#0F1F3D]'}>
+        <td className="px-4 py-3 text-sm font-medium text-[#9CA3AF]">#{rank}</td>
+        <td className="px-4 py-3 text-sm text-[#F9FAFB] max-w-md">
           <p className="line-clamp-2">{gap.query}</p>
         </td>
         <td className="px-4 py-3 text-center">
@@ -450,7 +450,7 @@ function GapRow({
             <MessageSquare className="h-4 w-4 text-green-500 mx-auto" />
           )}
         </td>
-        <td className="px-4 py-3 text-sm text-gray-500">
+        <td className="px-4 py-3 text-sm text-[#9CA3AF]">
           {new Date(gap.firstOccurredAt).toLocaleDateString()}
         </td>
         <td className="px-4 py-3 text-center">
@@ -486,13 +486,13 @@ function GapRow({
                 <button
                   onClick={() => onResolve(false)}
                   disabled={isResolving}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-800"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-[#9CA3AF] text-sm font-medium hover:text-[#F9FAFB]"
                 >
                   Mark Resolved (no KB needed)
                 </button>
                 <button
                   onClick={onExpand}
-                  className="ml-auto text-gray-400 hover:text-gray-600"
+                  className="ml-auto text-[#6B7280] hover:text-[#9CA3AF]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -521,8 +521,8 @@ function FeedbackTab({
   return (
     <div className="grid grid-cols-2 gap-6">
       {/* Left: Chart */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-[#162240] rounded-xl shadow-sm border border-[#1E3461] p-6">
+        <h3 className="text-lg font-semibold text-[#F9FAFB] mb-4 flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-purple-600" />
           Feedback by Issue Type (30 days)
         </h3>
@@ -561,18 +561,18 @@ function FeedbackTab({
       </div>
 
       {/* Right: Feedback Feed */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-[#162240] rounded-xl shadow-sm border border-[#1E3461] p-6">
+        <h3 className="text-lg font-semibold text-[#F9FAFB] mb-4">
           Recent Feedback Events
         </h3>
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {feedbackData?.recentEvents?.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No feedback events yet</p>
+            <p className="text-center text-[#9CA3AF] py-8">No feedback events yet</p>
           ) : (
             feedbackData?.recentEvents?.slice(0, 20).map((event) => (
               <div
                 key={event._id}
-                className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
+                className="flex items-start gap-3 p-3 bg-[#0F1F3D] rounded-lg"
               >
                 <div className="flex-shrink-0">
                   {event.channel === 'voice' ? (
@@ -592,12 +592,12 @@ function FeedbackTab({
                         {formatIssueType(event.issueType)}
                       </span>
                     )}
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-[#6B7280]">
                       {new Date(event.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                   {event.notes && (
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{event.notes}</p>
+                    <p className="text-sm text-[#9CA3AF] mt-1 line-clamp-2">{event.notes}</p>
                   )}
                   <div className="flex items-center gap-1 mt-1">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -640,12 +640,12 @@ function ABTestsTab({
     <div className="space-y-6">
       {/* Active Tests */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Tests</h3>
+        <h3 className="text-lg font-semibold text-[#F9FAFB] mb-4">Active Tests</h3>
         {activeTests.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-            <FlaskConical className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No active A/B tests</p>
-            <p className="text-sm text-gray-400 mt-1">
+          <div className="bg-[#162240] rounded-xl shadow-sm border border-[#1E3461] p-8 text-center">
+            <FlaskConical className="h-12 w-12 text-[#6B7280] mx-auto mb-3" />
+            <p className="text-[#9CA3AF]">No active A/B tests</p>
+            <p className="text-sm text-[#6B7280] mt-1">
               Create a new test to experiment with prompt variations
             </p>
           </div>
@@ -666,29 +666,29 @@ function ABTestsTab({
       {/* Past Tests */}
       {pastTests.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Past Tests</h3>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <h3 className="text-lg font-semibold text-[#F9FAFB] mb-4">Past Tests</h3>
+          <div className="bg-[#162240] rounded-xl shadow-sm border border-[#1E3461] overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-[#0F1F3D] border-b border-[#1E3461]">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase">
                     Name
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-center text-xs font-medium text-[#9CA3AF] uppercase">
                     Winner
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-center text-xs font-medium text-[#9CA3AF] uppercase">
                     Improvement
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase">
                     Date Concluded
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-[#1E3461]">
                 {pastTests.map((test) => (
-                  <tr key={test._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                  <tr key={test._id} className="hover:bg-[#0F1F3D]">
+                    <td className="px-4 py-3 text-sm font-medium text-[#F9FAFB]">
                       {test.name}
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -698,7 +698,7 @@ function ABTestsTab({
                           Variant {test.winner}
                         </span>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-[#6B7280]">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -708,10 +708,10 @@ function ABTestsTab({
                           +{test.winnerDelta.toFixed(1)}%
                         </span>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-[#6B7280]">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
+                    <td className="px-4 py-3 text-sm text-[#9CA3AF]">
                       {test.endDate
                         ? new Date(test.endDate).toLocaleDateString()
                         : '—'}
@@ -741,11 +741,11 @@ function ActiveTestCard({
   const confidence = test.calculatedConfidence || test.confidenceLevel || 0;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-[#162240] rounded-xl shadow-sm border border-[#1E3461] p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h4 className="text-lg font-semibold text-gray-900">{test.name}</h4>
-          <p className="text-sm text-gray-500 mt-1">{test.description}</p>
+          <h4 className="text-lg font-semibold text-[#F9FAFB]">{test.name}</h4>
+          <p className="text-sm text-[#9CA3AF] mt-1">{test.description}</p>
         </div>
         <div className="flex items-center gap-2">
           {test.status === 'running' && (
@@ -782,25 +782,25 @@ function ActiveTestCard({
       </div>
 
       {/* Status Line */}
-      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+      <div className="flex items-center justify-between pt-4 border-t border-[#1E3461]">
         <div className="text-sm">
           {delta > 0 ? (
-            <span className="text-gray-600">
+            <span className="text-[#9CA3AF]">
               Variant {leading} leading by{' '}
               <span className="font-semibold text-green-600">{delta.toFixed(1)}%</span>
               {confidence > 0 && (
-                <span className="text-gray-400 ml-2">— {confidence}% confidence</span>
+                <span className="text-[#6B7280] ml-2">— {confidence}% confidence</span>
               )}
             </span>
           ) : (
-            <span className="text-gray-500">No significant difference yet</span>
+            <span className="text-[#9CA3AF]">No significant difference yet</span>
           )}
         </div>
         <div className="flex items-center gap-2">
           {test.status === 'running' && (
             <button
               onClick={onToggle}
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-gray-600 text-sm hover:text-gray-800"
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-[#9CA3AF] text-sm hover:text-[#F9FAFB]"
             >
               <Pause className="h-4 w-4" />
               Pause
@@ -846,25 +846,25 @@ function VariantCard({
   return (
     <div
       className={`p-4 rounded-lg border-2 ${
-        isLeading ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-gray-50'
+        isLeading ? 'border-green-300 bg-green-900/20' : 'border-[#1E3461] bg-[#0F1F3D]'
       }`}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="font-semibold text-gray-900">Variant {variant}</span>
+        <span className="font-semibold text-[#F9FAFB]">Variant {variant}</span>
         {isLeading && (
           <Trophy className="h-4 w-4 text-green-600" />
         )}
       </div>
       {description && (
-        <p className="text-xs text-gray-500 mb-3 line-clamp-2">{description}</p>
+        <p className="text-xs text-[#9CA3AF] mb-3 line-clamp-2">{description}</p>
       )}
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div>
-          <span className="text-gray-500">Calls:</span>
+          <span className="text-[#9CA3AF]">Calls:</span>
           <span className="ml-2 font-medium">{calls.toLocaleString()}</span>
         </div>
         <div>
-          <span className="text-gray-500">Rate:</span>
+          <span className="text-[#9CA3AF]">Rate:</span>
           <span className="ml-2 font-medium">{rate.toFixed(1)}%</span>
         </div>
       </div>

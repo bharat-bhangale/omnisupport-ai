@@ -73,23 +73,23 @@ export function SLADashboard(): React.ReactElement {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[#0A1835] p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-[#F9FAFB] flex items-center gap-3">
               <Clock className="h-7 w-7 text-indigo-600" />
               SLA Dashboard
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-[#9CA3AF] mt-1">
               Monitor service level agreement compliance and response times
             </p>
           </div>
           <select
             value={days}
             onChange={(e) => setDays(parseInt(e.target.value))}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-3 py-2 bg-[#0A1835] border border-[#1E3461] rounded-lg text-sm text-[#F9FAFB] focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>
@@ -98,15 +98,15 @@ export function SLADashboard(): React.ReactElement {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+        <div className="flex gap-1 bg-[#0F1F3D] p-1 rounded-lg w-fit">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-white text-indigo-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-[#162240] text-indigo-400 shadow-sm'
+                  : 'text-[#9CA3AF] hover:text-[#F9FAFB]'
               }`}
             >
               {tab.icon}
@@ -149,7 +149,7 @@ function OverviewTab({ days }: { days: number }) {
       {/* Top Section: Gauge + Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Compliance Gauge */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 flex items-center justify-center">
+        <div className="bg-[#162240] rounded-xl border border-[#1E3461] p-6 flex items-center justify-center">
           {isLoadingCompliance ? (
             <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
           ) : (
@@ -162,15 +162,15 @@ function OverviewTab({ days }: { days: number }) {
         </div>
 
         {/* Compliance by Priority Table */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-900">Compliance by Priority</h3>
-            <p className="text-xs text-gray-500">Last {days} days</p>
+        <div className="lg:col-span-2 bg-[#162240] rounded-xl border border-[#1E3461]">
+          <div className="px-4 py-3 border-b border-[#1E3461]">
+            <h3 className="font-semibold text-[#F9FAFB]">Compliance by Priority</h3>
+            <p className="text-xs text-[#9CA3AF]">Last {days} days</p>
           </div>
           <div className="p-4">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-gray-500">
+                <tr className="text-left text-[#9CA3AF]">
                   <th className="pb-3 font-medium">Priority</th>
                   <th className="pb-3 font-medium text-right">Total</th>
                   <th className="pb-3 font-medium text-right">On Time</th>
@@ -179,7 +179,7 @@ function OverviewTab({ days }: { days: number }) {
                   <th className="pb-3 font-medium text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[#1E3461]">
                 {priorityData.map((row) => {
                   const status = getStatusBadge(row.rate);
                   return (
@@ -199,7 +199,7 @@ function OverviewTab({ days }: { days: number }) {
                           {row.priority}
                         </span>
                       </td>
-                      <td className="py-3 text-right text-gray-900">{row.total}</td>
+                      <td className="py-3 text-right text-[#F9FAFB]">{row.total}</td>
                       <td className="py-3 text-right text-green-600">{row.onTime}</td>
                       <td className="py-3 text-right text-red-600">{row.breached}</td>
                       <td className="py-3 text-right font-medium">{row.rate.toFixed(1)}%</td>
@@ -220,10 +220,10 @@ function OverviewTab({ days }: { days: number }) {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Breach Trend Chart */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-900">Breach Trend</h3>
-            <p className="text-xs text-gray-500">Daily breaches over {days} days</p>
+        <div className="lg:col-span-2 bg-[#162240] rounded-xl border border-[#1E3461]">
+          <div className="px-4 py-3 border-b border-[#1E3461]">
+            <h3 className="font-semibold text-[#F9FAFB]">Breach Trend</h3>
+            <p className="text-xs text-[#9CA3AF]">Daily breaches over {days} days</p>
           </div>
           <div className="p-4">
             {isLoadingHistory ? (
@@ -234,19 +234,20 @@ function OverviewTab({ days }: { days: number }) {
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={history}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1E3461" />
                     <XAxis
                       dataKey="date"
-                      tick={{ fontSize: 11 }}
+                      tick={{ fontSize: 11, fill: '#9CA3AF' }}
                       tickFormatter={(v) => v.split('-').slice(1).join('/')}
                     />
-                    <YAxis tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#fff',
-                        border: '1px solid #e5e7eb',
+                        backgroundColor: '#162240',
+                        border: '1px solid #1E3461',
                         borderRadius: '8px',
                         fontSize: '12px',
+                        color: '#F9FAFB',
                       }}
                     />
                     <Legend />
@@ -262,18 +263,18 @@ function OverviewTab({ days }: { days: number }) {
         </div>
 
         {/* Top Breach Categories */}
-        <div className="bg-white rounded-xl border border-gray-200">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-900">Top Breach Categories</h3>
-            <p className="text-xs text-gray-500">Most common breach reasons</p>
+        <div className="bg-[#162240] rounded-xl border border-[#1E3461]">
+          <div className="px-4 py-3 border-b border-[#1E3461]">
+            <h3 className="font-semibold text-[#F9FAFB]">Top Breach Categories</h3>
+            <p className="text-xs text-[#9CA3AF]">Most common breach reasons</p>
           </div>
           <div className="p-4">
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={topCategories} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="category" type="category" tick={{ fontSize: 11 }} width={100} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1E3461" />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: '#9CA3AF' }} />
+                  <YAxis dataKey="category" type="category" tick={{ fontSize: 11, fill: '#9CA3AF' }} width={100} />
                   <Tooltip />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                     {topCategories.map((_, index) => (
@@ -310,8 +311,8 @@ function BreachHistoryTab() {
   return (
     <>
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap items-center gap-4">
-        <Filter className="h-5 w-5 text-gray-400" />
+      <div className="bg-[#162240] rounded-xl border border-[#1E3461] p-4 flex flex-wrap items-center gap-4">
+        <Filter className="h-5 w-5 text-[#6B7280]" />
 
         <select
           value={priority || ''}
@@ -319,7 +320,7 @@ function BreachHistoryTab() {
             setPriority((e.target.value as 'P1' | 'P2' | 'P3' | 'P4') || undefined);
             setPage(1);
           }}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="px-3 py-2 bg-[#0A1835] border border-[#1E3461] rounded-lg text-sm text-[#F9FAFB] focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="">All Priorities</option>
           <option value="P1">P1 - Urgent</option>
@@ -336,12 +337,12 @@ function BreachHistoryTab() {
             setCategory(e.target.value);
             setPage(1);
           }}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-40"
+          className="px-3 py-2 bg-[#0A1835] border border-[#1E3461] rounded-lg text-sm text-[#F9FAFB] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-indigo-500 w-40"
         />
 
         <button
           onClick={() => refetch()}
-          className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900"
+          className="flex items-center gap-2 px-3 py-2 text-[#9CA3AF] hover:text-[#F9FAFB]"
         >
           <RefreshCw className="h-4 w-4" />
           Refresh
@@ -349,11 +350,11 @@ function BreachHistoryTab() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-[#162240] rounded-xl border border-[#1E3461] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-gray-500 bg-gray-50 border-b border-gray-200">
+              <tr className="text-left text-[#9CA3AF] bg-[#0F1F3D] border-b border-[#1E3461]">
                 <th className="px-4 py-3 font-medium">Date</th>
                 <th className="px-4 py-3 font-medium">Subject</th>
                 <th className="px-4 py-3 font-medium">Priority</th>
@@ -365,7 +366,7 @@ function BreachHistoryTab() {
                 <th className="px-4 py-3 font-medium">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[#1E3461]">
               {isLoading ? (
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center">
@@ -374,7 +375,7 @@ function BreachHistoryTab() {
                 </tr>
               ) : breaches.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-gray-500">
+                  <td colSpan={9} className="px-4 py-12 text-center text-[#9CA3AF]">
                     <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
                     No breaches found
                   </td>
@@ -390,22 +391,22 @@ function BreachHistoryTab() {
 
         {/* Pagination */}
         {pagination && pagination.totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
-            <span className="text-sm text-gray-500">
+          <div className="px-4 py-3 border-t border-[#1E3461] flex items-center justify-between">
+            <span className="text-sm text-[#9CA3AF]">
               Page {page} of {pagination.totalPages} ({pagination.total} total)
             </span>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50"
+                className="px-3 py-1 border border-[#1E3461] rounded text-sm text-[#F9FAFB] disabled:opacity-50"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
                 disabled={page === pagination.totalPages}
-                className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50"
+                className="px-3 py-1 border border-[#1E3461] rounded text-sm text-[#F9FAFB] disabled:opacity-50"
               >
                 Next
               </button>
@@ -431,13 +432,13 @@ function BreachRow({ breach, onReview }: { breach: SLABreach; onReview: () => vo
   };
 
   return (
-    <tr className="hover:bg-gray-50">
-      <td className="px-4 py-3 text-gray-600">
+    <tr className="hover:bg-[#0F1F3D]">
+      <td className="px-4 py-3 text-[#9CA3AF]">
         {new Date(breach.breachedAt).toLocaleDateString()}
       </td>
       <td className="px-4 py-3">
-        <p className="font-medium text-gray-900 truncate max-w-xs">{breach.subject}</p>
-        <p className="text-xs text-gray-500">#{breach.ticketId.slice(-6)}</p>
+        <p className="font-medium text-[#F9FAFB] truncate max-w-xs">{breach.subject}</p>
+        <p className="text-xs text-[#9CA3AF]">#{breach.ticketId.slice(-6)}</p>
       </td>
       <td className="px-4 py-3">
         <span
@@ -454,11 +455,11 @@ function BreachRow({ breach, onReview }: { breach: SLABreach; onReview: () => vo
           {breach.priority}
         </span>
       </td>
-      <td className="px-4 py-3 text-gray-600">{breach.category}</td>
+      <td className="px-4 py-3 text-[#9CA3AF]">{breach.category}</td>
       <td className="px-4 py-3">
         <span className="text-red-600 font-medium">{formatOverdue(breach.overdueMinutes)}</span>
       </td>
-      <td className="px-4 py-3 text-gray-600">{breach.assignedAgentName || '—'}</td>
+      <td className="px-4 py-3 text-[#9CA3AF]">{breach.assignedAgentName || '—'}</td>
       <td className="px-4 py-3">
         {breach.resolved ? (
           <CheckCircle className="h-5 w-5 text-green-500" />
@@ -468,9 +469,9 @@ function BreachRow({ breach, onReview }: { breach: SLABreach; onReview: () => vo
       </td>
       <td className="px-4 py-3">
         {breach.rootCause ? (
-          <span className="text-sm text-gray-600 truncate max-w-[120px] block">{breach.rootCause}</span>
+          <span className="text-sm text-[#9CA3AF] truncate max-w-[120px] block">{breach.rootCause}</span>
         ) : (
-          <span className="text-gray-400">—</span>
+          <span className="text-[#6B7280]">—</span>
         )}
       </td>
       <td className="px-4 py-3">
@@ -507,18 +508,18 @@ function BreachReviewModal({ breach, onClose }: { breach: SLABreach; onClose: ()
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/30" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-white rounded-xl shadow-xl p-6">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-lg bg-[#162240] rounded-xl shadow-xl p-6">
+        <button onClick={onClose} className="absolute top-4 right-4 text-[#6B7280] hover:text-[#9CA3AF]">
           <X className="h-5 w-5" />
         </button>
 
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Review SLA Breach</h2>
+        <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Review SLA Breach</h2>
 
         <div className="space-y-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="font-medium text-gray-900">{breach.subject}</p>
-            <p className="text-sm text-gray-600 mt-1">
+          <div className="bg-red-900/30 border border-red-700 rounded-lg p-4">
+            <p className="font-medium text-[#F9FAFB]">{breach.subject}</p>
+            <p className="text-sm text-[#9CA3AF] mt-1">
               <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold mr-2 ${
                 breach.priority === 'P1' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
               }`}>
@@ -529,14 +530,14 @@ function BreachReviewModal({ breach, onClose }: { breach: SLABreach; onClose: ()
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[#F9FAFB] mb-2">
               Root Cause Analysis
             </label>
             <textarea
               value={rootCause}
               onChange={(e) => setRootCause(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] rounded-lg text-sm text-[#F9FAFB] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="Describe the root cause of this SLA breach..."
             />
           </div>
@@ -544,7 +545,7 @@ function BreachReviewModal({ breach, onClose }: { breach: SLABreach; onClose: ()
           <div className="flex justify-end gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              className="px-4 py-2 text-[#F9FAFB] hover:bg-[#0F1F3D] rounded-lg"
             >
               Cancel
             </button>
@@ -579,9 +580,9 @@ function AtRiskTab() {
   return (
     <>
       {/* Header */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between">
+      <div className="bg-[#162240] rounded-xl border border-[#1E3461] p-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h3 className="font-semibold text-gray-900">
+          <h3 className="font-semibold text-[#F9FAFB]">
             At-Risk Right Now ({tickets.length})
           </h3>
           {criticalCount > 0 && (
@@ -599,7 +600,7 @@ function AtRiskTab() {
         </div>
         <button
           onClick={() => refetch()}
-          className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900"
+          className="flex items-center gap-2 px-3 py-2 text-[#9CA3AF] hover:text-[#F9FAFB]"
         >
           <RefreshCw className="h-4 w-4" />
           Refresh
@@ -609,14 +610,14 @@ function AtRiskTab() {
       {/* Ticket Cards */}
       <div className="space-y-3">
         {isLoading ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 flex items-center justify-center">
+          <div className="bg-[#162240] rounded-xl border border-[#1E3461] p-12 flex items-center justify-center">
             <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
           </div>
         ) : tickets.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <div className="bg-[#162240] rounded-xl border border-[#1E3461] p-12 text-center">
             <CheckCircle className="h-12 w-12 mx-auto mb-3 text-green-500" />
-            <p className="text-lg font-medium text-gray-900">All Clear!</p>
-            <p className="text-gray-500">No tickets are at risk of breaching SLA</p>
+            <p className="text-lg font-medium text-[#F9FAFB]">All Clear!</p>
+            <p className="text-[#9CA3AF]">No tickets are at risk of breaching SLA</p>
           </div>
         ) : (
           tickets.map((ticket) => <AtRiskTicketCard key={ticket.ticketId} ticket={ticket} />)
@@ -631,8 +632,8 @@ function AtRiskTicketCard({ ticket }: { ticket: AtRiskTicket }) {
 
   return (
     <div
-      className={`bg-white rounded-xl border-2 p-4 ${
-        isCritical ? 'border-red-300 bg-red-50/30' : 'border-amber-300 bg-amber-50/30'
+      className={`bg-[#162240] rounded-xl border-2 p-4 ${
+        isCritical ? 'border-red-500 bg-red-900/10' : 'border-amber-500 bg-amber-900/10'
       }`}
     >
       <div className="flex items-center justify-between">
@@ -640,18 +641,18 @@ function AtRiskTicketCard({ ticket }: { ticket: AtRiskTicket }) {
           {/* Countdown */}
           <div
             className={`w-20 h-20 rounded-xl flex flex-col items-center justify-center ${
-              isCritical ? 'bg-red-100' : 'bg-amber-100'
+              isCritical ? 'bg-red-900/30' : 'bg-amber-900/30'
             }`}
           >
-            <span className={`text-2xl font-bold ${isCritical ? 'text-red-600' : 'text-amber-600'}`}>
+            <span className={`text-2xl font-bold ${isCritical ? 'text-red-400' : 'text-amber-400'}`}>
               {ticket.minutesLeft}
             </span>
-            <span className={`text-xs ${isCritical ? 'text-red-500' : 'text-amber-500'}`}>min left</span>
+            <span className={`text-xs ${isCritical ? 'text-red-400' : 'text-amber-400'}`}>min left</span>
           </div>
 
           {/* Info */}
           <div>
-            <p className="font-medium text-gray-900">{ticket.subject}</p>
+            <p className="font-medium text-[#F9FAFB]">{ticket.subject}</p>
             <div className="flex items-center gap-2 mt-1">
               <span
                 className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${
@@ -665,14 +666,14 @@ function AtRiskTicketCard({ ticket }: { ticket: AtRiskTicket }) {
                 {ticket.priority}
               </span>
               {ticket.category && (
-                <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                <span className="text-xs px-2 py-0.5 bg-[#0F1F3D] text-[#9CA3AF] rounded">
                   {ticket.category}
                 </span>
               )}
               {ticket.assignedAgent ? (
-                <span className="text-xs text-gray-500">Assigned to: {ticket.assignedAgent}</span>
+                <span className="text-xs text-[#9CA3AF]">Assigned to: {ticket.assignedAgent}</span>
               ) : (
-                <span className="text-xs text-red-500 font-medium">Unassigned</span>
+                <span className="text-xs text-red-400 font-medium">Unassigned</span>
               )}
             </div>
           </div>
@@ -688,7 +689,7 @@ function AtRiskTicketCard({ ticket }: { ticket: AtRiskTicket }) {
           )}
           <a
             href={`/tickets?id=${ticket.ticketId}`}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2 border border-[#1E3461] rounded-lg text-sm text-[#F9FAFB] hover:bg-[#0F1F3D]"
           >
             <ExternalLink className="h-4 w-4" />
             View Ticket

@@ -54,43 +54,43 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex">
+    <div className="min-h-screen bg-[#0A1835] flex">
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-600/20 to-blue-600/20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0F766E]/20 to-[#3B82F6]/20" />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMyMjI4MzEiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40" />
         
         <div className="relative z-10 flex flex-col justify-center px-16">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0F766E] to-[#3B82F6] flex items-center justify-center">
               <Sparkles className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-white">OmniSupport AI</h1>
+            <h1 className="text-3xl font-bold text-[#F9FAFB]">OmniSupport AI</h1>
           </div>
           
-          <h2 className="text-4xl font-bold text-white mb-4">
+          <h2 className="text-4xl font-bold text-[#F9FAFB] mb-4">
             AI-Powered Customer Support
           </h2>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-xl text-[#9CA3AF] mb-8">
             Handle voice calls, tickets, and escalations with intelligent automation that learns from every interaction.
           </p>
 
           <div className="space-y-4">
-            <div className="flex items-center gap-3 text-gray-300">
-              <div className="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center">
-                <span className="text-teal-400">✓</span>
+            <div className="flex items-center gap-3 text-[#9CA3AF]">
+              <div className="w-8 h-8 rounded-full bg-[#0F766E]/20 flex items-center justify-center">
+                <span className="text-[#0F766E]">✓</span>
               </div>
               <span>80%+ AI resolution rate on routine queries</span>
             </div>
-            <div className="flex items-center gap-3 text-gray-300">
-              <div className="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center">
-                <span className="text-teal-400">✓</span>
+            <div className="flex items-center gap-3 text-[#9CA3AF]">
+              <div className="w-8 h-8 rounded-full bg-[#0F766E]/20 flex items-center justify-center">
+                <span className="text-[#0F766E]">✓</span>
               </div>
               <span>Real-time voice transcription & sentiment analysis</span>
             </div>
-            <div className="flex items-center gap-3 text-gray-300">
-              <div className="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center">
-                <span className="text-teal-400">✓</span>
+            <div className="flex items-center gap-3 text-[#9CA3AF]">
+              <div className="w-8 h-8 rounded-full bg-[#0F766E]/20 flex items-center justify-center">
+                <span className="text-[#0F766E]">✓</span>
               </div>
               <span>Smart escalation with full context handoff</span>
             </div>
@@ -102,33 +102,33 @@ export default function Login() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F766E] to-[#3B82F6] flex items-center justify-center">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white">OmniSupport AI</h1>
+            <h1 className="text-2xl font-bold text-[#F9FAFB]">OmniSupport AI</h1>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="bg-[#162240] rounded-2xl border border-[#1E3461] shadow-xl p-8">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-              <p className="text-gray-500 mt-1">Sign in to your account</p>
+              <h2 className="text-2xl font-bold text-[#F9FAFB]">Welcome back</h2>
+              <p className="text-[#9CA3AF] mt-1">Sign in to your account</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="email" className="block text-sm font-medium text-[#9CA3AF] mb-1.5">
                   Email address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
                   <input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@company.com"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors"
+                    className="w-full pl-10 pr-4 py-3 bg-[#0A1835] border border-[#1E3461] rounded-lg text-[#F9FAFB] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition-colors"
                     autoComplete="email"
                   />
                 </div>
@@ -136,24 +136,24 @@ export default function Login() {
 
               {/* Password */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="password" className="block text-sm font-medium text-[#9CA3AF] mb-1.5">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
                   <input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors"
+                    className="w-full pl-10 pr-12 py-3 bg-[#0A1835] border border-[#1E3461] rounded-lg text-[#F9FAFB] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition-colors"
                     autoComplete="current-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#9CA3AF]"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -167,13 +167,13 @@ export default function Login() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                    className="w-4 h-4 rounded border-[#1E3461] bg-[#0A1835] text-[#3B82F6] focus:ring-[#3B82F6]"
                   />
-                  <span className="text-sm text-gray-600">Remember me</span>
+                  <span className="text-sm text-[#9CA3AF]">Remember me</span>
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+                  className="text-sm text-[#3B82F6] hover:text-[#60A5FA] font-medium"
                 >
                   Forgot password?
                 </Link>
@@ -183,7 +183,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
+                className="w-full py-3 px-4 bg-[#3B82F6] hover:bg-[#1D4ED8] disabled:bg-[#3B82F6]/50 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 {isLoading ? (
                   <>
@@ -202,16 +202,16 @@ export default function Login() {
             {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-[#1E3461]" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">or continue with</span>
+                <span className="px-4 bg-[#162240] text-[#6B7280]">or continue with</span>
               </div>
             </div>
 
             {/* SSO Options */}
             <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+              <button className="flex items-center justify-center gap-2 py-2.5 px-4 border border-[#1E3461] rounded-lg hover:bg-[#0F1F3D] transition-colors">
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
@@ -230,20 +230,20 @@ export default function Login() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                <span className="text-sm font-medium text-gray-700">Google</span>
+                <span className="text-sm font-medium text-[#9CA3AF]">Google</span>
               </button>
-              <button className="flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <button className="flex items-center justify-center gap-2 py-2.5 px-4 border border-[#1E3461] rounded-lg hover:bg-[#0F1F3D] transition-colors">
+                <svg className="w-5 h-5 text-[#F9FAFB]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
-                <span className="text-sm font-medium text-gray-700">GitHub</span>
+                <span className="text-sm font-medium text-[#9CA3AF]">GitHub</span>
               </button>
             </div>
 
             {/* Sign up link */}
-            <p className="mt-6 text-center text-sm text-gray-600">
+            <p className="mt-6 text-center text-sm text-[#9CA3AF]">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-teal-600 hover:text-teal-700 font-semibold">
+              <Link to="/signup" className="text-[#3B82F6] hover:text-[#60A5FA] font-semibold">
                 Start free trial
               </Link>
             </p>
