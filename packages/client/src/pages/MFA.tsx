@@ -129,30 +129,30 @@ export default function MFA() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-8">
+    <div className="min-h-screen bg-[#0A1835] flex items-center justify-center p-8">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8 justify-center">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0F766E] to-[#3B82F6] flex items-center justify-center">
             <Sparkles className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">OmniSupport AI</h1>
+          <h1 className="text-2xl font-bold text-[#F9FAFB]">OmniSupport AI</h1>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-[#162240] rounded-2xl border border-[#1E3461] shadow-xl p-8">
           {/* Icon */}
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-teal-100 flex items-center justify-center">
-              <Shield className="w-8 h-8 text-teal-600" />
+            <div className="w-16 h-16 rounded-2xl bg-[#3B82F6]/20 flex items-center justify-center">
+              <Shield className="w-8 h-8 text-[#3B82F6]" />
             </div>
           </div>
 
           {/* Header */}
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Two-Factor Authentication</h2>
-            <p className="text-gray-500 mt-2">
+            <h2 className="text-2xl font-bold text-[#F9FAFB]">Two-Factor Authentication</h2>
+            <p className="text-[#9CA3AF] mt-2">
               We sent a 6-digit code to{' '}
-              <span className="font-medium text-gray-700">{email}</span>
+              <span className="font-medium text-[#F9FAFB]">{email}</span>
             </p>
           </div>
 
@@ -168,7 +168,7 @@ export default function MFA() {
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors"
+                className="w-12 h-14 text-center text-2xl font-bold bg-[#0A1835] border-2 border-[#1E3461] rounded-lg text-[#F9FAFB] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition-colors"
                 autoFocus={index === 0}
               />
             ))}
@@ -178,7 +178,7 @@ export default function MFA() {
           <button
             onClick={() => handleSubmit(code.join(''))}
             disabled={isVerifying || code.some((d) => !d)}
-            className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors mb-4"
+            className="w-full py-3 px-4 bg-[#3B82F6] hover:bg-[#1D4ED8] disabled:bg-[#3B82F6]/50 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors mb-4"
           >
             {isVerifying ? (
               <>
@@ -195,11 +195,11 @@ export default function MFA() {
 
           {/* Resend */}
           <div className="text-center">
-            <p className="text-sm text-gray-500 mb-2">Didn't receive the code?</p>
+            <p className="text-sm text-[#9CA3AF] mb-2">Didn't receive the code?</p>
             <button
               onClick={handleResend}
               disabled={resendCooldown > 0 || isResending}
-              className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 text-[#3B82F6] hover:text-[#60A5FA] font-medium disabled:text-[#6B7280] disabled:cursor-not-allowed"
             >
               {isResending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -211,10 +211,10 @@ export default function MFA() {
           </div>
 
           {/* Back to login */}
-          <p className="mt-8 text-center text-sm text-gray-600">
+          <p className="mt-8 text-center text-sm text-[#9CA3AF]">
             <button
               onClick={() => navigate('/login')}
-              className="text-teal-600 hover:text-teal-700 font-medium"
+              className="text-[#3B82F6] hover:text-[#60A5FA] font-medium"
             >
               ← Back to login
             </button>
@@ -222,7 +222,7 @@ export default function MFA() {
         </div>
 
         {/* Security note */}
-        <p className="mt-6 text-center text-xs text-gray-400">
+        <p className="mt-6 text-center text-xs text-[#6B7280]">
           For your security, this code expires in 10 minutes
         </p>
       </div>

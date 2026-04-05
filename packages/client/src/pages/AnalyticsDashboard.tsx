@@ -181,18 +181,18 @@ export function AnalyticsDashboard(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-[#0A1835] p-6">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-48 mb-6" />
+            <div className="h-8 bg-[#1E3461] rounded w-48 mb-6" />
             <div className="grid grid-cols-4 gap-4 mb-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded-xl" />
+                <div key={i} className="h-32 bg-[#1E3461] rounded-xl" />
               ))}
             </div>
             <div className="grid grid-cols-2 gap-6">
-              <div className="h-64 bg-gray-200 rounded-xl" />
-              <div className="h-64 bg-gray-200 rounded-xl" />
+              <div className="h-64 bg-[#1E3461] rounded-xl" />
+              <div className="h-64 bg-[#1E3461] rounded-xl" />
             </div>
           </div>
         </div>
@@ -202,10 +202,10 @@ export function AnalyticsDashboard(): React.ReactElement {
 
   if (error || !analytics) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0A1835] p-6 flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <p className="text-gray-600">Failed to load analytics</p>
+          <p className="text-[#9CA3AF]">Failed to load analytics</p>
         </div>
       </div>
     );
@@ -214,20 +214,20 @@ export function AnalyticsDashboard(): React.ReactElement {
   const { summary, costSavings, topIntents, slaCompliance, kbHealth, channelDistribution } = analytics;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[#0A1835] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-            <p className="text-gray-500 mt-1">
+            <h1 className="text-2xl font-bold text-[#F9FAFB]">Analytics Dashboard</h1>
+            <p className="text-[#9CA3AF] mt-1">
               Last updated: {new Date(analytics.cachedAt).toLocaleString()}
             </p>
           </div>
 
           <div className="flex items-center gap-4">
             {/* Date range tabs */}
-            <div className="flex bg-white border border-gray-200 rounded-lg p-1">
+            <div className="flex bg-[#162240] border border-[#1E3461] rounded-lg p-1">
               {DATE_RANGES.map((range) => (
                 <button
                   key={range.value}
@@ -235,7 +235,7 @@ export function AnalyticsDashboard(): React.ReactElement {
                   className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
                     days === range.value
                       ? 'bg-blue-600 text-white'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      : 'text-[#9CA3AF] hover:bg-[#0F1F3D]'
                   }`}
                 >
                   {range.label}
@@ -246,7 +246,7 @@ export function AnalyticsDashboard(): React.ReactElement {
             {/* Export button */}
             <button
               onClick={handleExport}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#162240] border border-[#1E3461] rounded-lg text-[#F9FAFB] hover:bg-[#0F1F3D]"
             >
               <Download className="w-4 h-4" />
               Export Report
@@ -441,11 +441,11 @@ export function AnalyticsDashboard(): React.ReactElement {
         {/* ROW 4: SLA Compliance + Cost Savings */}
         <div className="grid grid-cols-2 gap-6 mb-6">
           {/* SLA Compliance Table */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">SLA Compliance</h3>
+          <div className="bg-[#162240] rounded-xl border border-[#1E3461] p-5">
+            <h3 className="text-lg font-semibold text-[#F9FAFB] mb-4">SLA Compliance</h3>
             <table className="w-full">
               <thead>
-                <tr className="text-left text-sm text-gray-500 border-b border-gray-100">
+                <tr className="text-left text-sm text-[#9CA3AF] border-b border-[#1E3461]">
                   <th className="pb-3">Priority</th>
                   <th className="pb-3">Total</th>
                   <th className="pb-3">On-Time</th>
@@ -458,7 +458,7 @@ export function AnalyticsDashboard(): React.ReactElement {
                   const data = slaCompliance[priority];
                   const onTime = data.total - data.breached;
                   return (
-                    <tr key={priority} className="border-b border-gray-50">
+                    <tr key={priority} className="border-b border-[#1E3461]">
                       <td className="py-3">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
@@ -468,18 +468,18 @@ export function AnalyticsDashboard(): React.ReactElement {
                                 ? 'bg-amber-100 text-amber-700'
                                 : priority === 'P3'
                                   ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-gray-100 text-gray-700'
+                                  : 'bg-[#1E3461] text-[#9CA3AF]'
                           }`}
                         >
                           {priority}
                         </span>
                       </td>
-                      <td className="py-3 text-gray-700">{data.total}</td>
+                      <td className="py-3 text-[#F9FAFB]">{data.total}</td>
                       <td className="py-3 text-green-600">{onTime}</td>
                       <td className="py-3 text-red-600">{data.breached}</td>
                       <td className="py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="w-16 h-2 bg-[#1E3461] rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full ${
                                 data.rate >= 90 ? 'bg-green-500' : data.rate >= 70 ? 'bg-amber-500' : 'bg-red-500'
@@ -487,7 +487,7 @@ export function AnalyticsDashboard(): React.ReactElement {
                               style={{ width: `${data.rate}%` }}
                             />
                           </div>
-                          <span className="text-sm font-medium text-gray-700">{data.rate}%</span>
+                          <span className="text-sm font-medium text-[#F9FAFB]">{data.rate}%</span>
                         </div>
                       </td>
                     </tr>
@@ -498,21 +498,21 @@ export function AnalyticsDashboard(): React.ReactElement {
           </div>
 
           {/* Cost Savings Breakdown */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Cost Savings Breakdown</h3>
+          <div className="bg-[#162240] rounded-xl border border-[#1E3461] p-5">
+            <h3 className="text-lg font-semibold text-[#F9FAFB] mb-4">Cost Savings Breakdown</h3>
             <div className="space-y-6">
               {/* Voice Savings */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Phone className="w-5 h-5 text-blue-500" />
-                    <span className="text-gray-700 font-medium">Voice Calls</span>
+                    <span className="text-[#F9FAFB] font-medium">Voice Calls</span>
                   </div>
                   <span className="text-xl font-bold text-green-600">
                     {formatCurrency(costSavings.callSavings)}
                   </span>
                 </div>
-                <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-3 bg-[#1E3461] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-blue-500 rounded-full"
                     style={{
@@ -520,7 +520,7 @@ export function AnalyticsDashboard(): React.ReactElement {
                     }}
                   />
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-[#9CA3AF] mt-1">
                   {costSavings.callCount} calls × $11.56 saved per AI-handled call
                 </p>
               </div>
@@ -530,13 +530,13 @@ export function AnalyticsDashboard(): React.ReactElement {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="w-5 h-5 text-teal-500" />
-                    <span className="text-gray-700 font-medium">Ticket Drafts</span>
+                    <span className="text-[#F9FAFB] font-medium">Ticket Drafts</span>
                   </div>
                   <span className="text-xl font-bold text-green-600">
                     {formatCurrency(costSavings.ticketSavings)}
                   </span>
                 </div>
-                <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-3 bg-[#1E3461] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-teal-500 rounded-full"
                     style={{
@@ -544,15 +544,15 @@ export function AnalyticsDashboard(): React.ReactElement {
                     }}
                   />
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-[#9CA3AF] mt-1">
                   {costSavings.ticketCount} tickets × $12.22 saved per AI draft
                 </p>
               </div>
 
               {/* Total */}
-              <div className="pt-4 border-t border-gray-200">
+              <div className="pt-4 border-t border-[#1E3461]">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-900 font-semibold">Total Savings</span>
+                  <span className="text-[#F9FAFB] font-semibold">Total Savings</span>
                   <span className="text-2xl font-bold text-green-600">
                     {formatCurrency(costSavings.total)}
                   </span>
@@ -563,31 +563,31 @@ export function AnalyticsDashboard(): React.ReactElement {
         </div>
 
         {/* ROW 5: KB Health */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-[#162240] rounded-xl border border-[#1E3461] p-5">
           <div className="flex items-center gap-2 mb-4">
             <HelpCircle className="w-5 h-5 text-purple-500" />
-            <h3 className="text-lg font-semibold text-gray-900">Knowledge Base Health</h3>
+            <h3 className="text-lg font-semibold text-[#F9FAFB]">Knowledge Base Health</h3>
           </div>
           <div className="grid grid-cols-4 gap-6">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Total Queries</p>
-              <p className="text-2xl font-bold text-gray-900">{kbHealth.totalQueries}</p>
+              <p className="text-sm text-[#9CA3AF] mb-1">Total Queries</p>
+              <p className="text-2xl font-bold text-[#F9FAFB]">{kbHealth.totalQueries}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 mb-1">Answered</p>
+              <p className="text-sm text-[#9CA3AF] mb-1">Answered</p>
               <p className="text-2xl font-bold text-green-600">
                 {kbHealth.totalQueries - kbHealth.unanswered}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 mb-1">Unanswered</p>
+              <p className="text-sm text-[#9CA3AF] mb-1">Unanswered</p>
               <p className="text-2xl font-bold text-red-600">{kbHealth.unanswered}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 mb-1">Hit Rate</p>
+              <p className="text-sm text-[#9CA3AF] mb-1">Hit Rate</p>
               <div className="flex items-center gap-3">
                 <p className="text-2xl font-bold text-purple-600">{kbHealth.hitRate}%</p>
-                <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div className="flex-1 h-3 bg-[#1E3461] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-purple-500 rounded-full"
                     style={{ width: `${kbHealth.hitRate}%` }}
