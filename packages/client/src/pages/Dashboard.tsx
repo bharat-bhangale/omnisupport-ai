@@ -26,6 +26,12 @@ import {
 import StatCard from '../components/StatCard';
 import { useDashboardSocket } from '../hooks/useDashboardSocket';
 import {
+  SkeletonStatCard,
+  SkeletonTable,
+  Skeleton,
+  ErrorState,
+} from '../components/Loading';
+import {
   useGetDashboardSummaryQuery,
   useGetLiveActivityQuery,
   useGetActiveCallsQuery,
@@ -39,19 +45,26 @@ export default function Dashboard() {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
 
   // Fetch data with RTK Query
-  const { data: summary, refetch: refetchSummary } = useGetDashboardSummaryQuery(
-    { days: 1 },
-    { pollingInterval: 30000 }
-  );
-  const { data: activityData } = useGetLiveActivityQuery(
+  const {
+    data: summary,
+    refetch: refetchSummary,
+    isLoading: summaryLoading,
+    isError: summaryError,
+  } = useGetDashboardSummaryQuery({ days: 1 }, { pollingInterval: 30000 });
+  const { data: activityData, isLoading: activityLoading } = useGetLiveActivityQuery(
     { limit: 10 },
     { pollingInterval: 30000 }
   );
-  const { data: activeCallsData } = useGetActiveCallsQuery(undefined, {
+  const { data: activeCallsData, isLoading: callsLoading } = useGetActiveCallsQuery(undefined, {
     pollingInterval: 10000,
   });
-  const { data: recentTicketsData } = useGetRecentTicketsQuery({ limit: 5 });
-  const { data: chartData } = useGetResolutionChartQuery();
+  const {
+    data: recentTicketsData,
+    isLoading: ticketsLoading,
+    isError: ticketsError,
+    refetch: refetchTickets,
+  } = useGetRecentTicketsQuery({ limit: 5 });
+  const { data: chartData, isLoading: chartLoading } = useGetResolutionChartQuery();
   const { data: systemStatus } = useGetSystemStatusQuery(undefined, {
     pollingInterval: 60000,
   });
@@ -115,36 +128,55 @@ export default function Dashboard() {
 
       {/* ROW 1: 4 StatCards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          value={summary?.activeCalls || 0}
-          label="Active Calls Right Now"
-          accent="blue"
-          isLive={!!summary?.activeCalls && summary.activeCalls > 0}
-        />
-        <StatCard
-          value={summary?.openTickets || 0}
-          label="Open Tickets"
-          trend={summary?.openTicketTrend}
-          trendPositive={false}
-          accent="amber"
-          subtitle="vs yesterday"
-        />
-        <StatCard
-          value={summary?.aiResolutionRate || 0}
-          label="AI Resolution Rate"
-          trend={summary?.resolutionRateTrend}
-          trendPositive={true}
-          accent="teal"
-          suffix="%"
-          subtitle="vs last week"
-        />
-        <StatCard
-          value={summary?.costSavedToday || 0}
-          label="Cost Saved Today"
-          accent="green"
-          prefix="$"
-          subtitle={`${summary?.interactionsToday || 0} interactions`}
-        />
+        {summaryLoading ? (
+          <>
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+          </>
+        ) : summaryError ? (
+          <div className="col-span-4">
+            <ErrorState
+              title="Failed to load summary"
+              message="Unable to fetch dashboard summary. Please try again."
+              onRetry={() => refetchSummary()}
+            />
+          </div>
+        ) : (
+          <>
+            <StatCard
+              value={summary?.activeCalls || 0}
+              label="Active Calls Right Now"
+              accent="blue"
+              isLive={!!summary?.activeCalls && summary.activeCalls > 0}
+            />
+            <StatCard
+              value={summary?.openTickets || 0}
+              label="Open Tickets"
+              trend={summary?.openTicketTrend}
+              trendPositive={false}
+              accent="amber"
+              subtitle="vs yesterday"
+            />
+            <StatCard
+              value={summary?.aiResolutionRate || 0}
+              label="AI Resolution Rate"
+              trend={summary?.resolutionRateTrend}
+              trendPositive={true}
+              accent="teal"
+              suffix="%"
+              subtitle="vs last week"
+            />
+            <StatCard
+              value={summary?.costSavedToday || 0}
+              label="Cost Saved Today"
+              accent="green"
+              prefix="$"
+              subtitle={`${summary?.interactionsToday || 0} interactions`}
+            />
+          </>
+        )}
       </div>
 
       {/* ROW 2: Live Activity + Active Calls */}

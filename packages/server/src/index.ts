@@ -7,6 +7,7 @@ import { logger } from './config/logger.js';
 import { connectDatabase } from './config/database.js';
 import { connectRedis } from './config/redis.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { standardRateLimit, webhookRateLimit } from './middleware/rateLimit.js';
 import { vapiWebhookHandler, getCallSessionState } from './webhooks/vapi.js';
 import { vapiToolsHandler } from './webhooks/vapiTools.js';
 import authRouter from './routes/auth.js';
@@ -96,9 +97,12 @@ async function bootstrap(): Promise<void> {
     });
   });
 
-  // Webhooks (no auth required, signature validated)
-  app.post('/webhooks/vapi', vapiWebhookHandler);
-  app.post('/vapi/tools', vapiToolsHandler);
+  // Webhooks (no auth required, signature validated) - with webhook rate limit
+  app.post('/webhooks/vapi', webhookRateLimit, vapiWebhookHandler);
+  app.post('/vapi/tools', webhookRateLimit, vapiToolsHandler);
+
+  // Apply standard rate limiting to all API routes
+  app.use('/api', standardRateLimit);
 
   // API routes (auth middleware applied per-router as needed)
   app.use('/api/auth', authRouter);

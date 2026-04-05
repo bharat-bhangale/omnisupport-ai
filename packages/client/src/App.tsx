@@ -3,6 +3,7 @@ import { Provider } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 import { store } from './store';
 import Layout from './components/Layout';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Auth Pages
 import Landing from './pages/Landing';
@@ -73,9 +74,10 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Provider store={store}>
-      <BrowserRouter>
-        <Toaster
+    <ErrorBoundary>
+      <Provider store={store}>
+        <BrowserRouter>
+          <Toaster
           position="top-right"
           toastOptions={{
             duration: 4000,
@@ -353,5 +355,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </Provider>
+    </ErrorBoundary>
   );
 }

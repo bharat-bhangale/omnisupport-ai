@@ -56,6 +56,7 @@ const envSchema = z.object({
   // Freshdesk
   FRESHDESK_DOMAIN: z.string().optional(),
   FRESHDESK_API_KEY: z.string().optional(),
+  FRESHDESK_WEBHOOK_SECRET: z.string().optional(),
 
   // Salesforce
   SALESFORCE_CLIENT_ID: z.string().optional(),

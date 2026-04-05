@@ -35,30 +35,65 @@ const freshdeskWebhookSchema = z.object({
 });
 
 /**
+ * Validate Freshdesk webhook HMAC signature
+ * Freshdesk sends signature in X-Freshdesk-Webhook-Signature header
+ */
+function validateFreshdeskSignature(req: Request): boolean {
+  const signature = req.headers['x-freshdesk-webhook-signature'] as string | undefined;
+  
+  if (signature && env.FRESHDESK_WEBHOOK_SECRET) {
+    try {
+      const rawBody = JSON.stringify(req.body);
+      const expectedSignature = crypto
+        .createHmac('sha256', env.FRESHDESK_WEBHOOK_SECRET)
+        .update(rawBody)
+        .digest('base64');
+
+      // Use timing-safe comparison to prevent timing attacks
+      return crypto.timingSafeEqual(
+        Buffer.from(signature),
+        Buffer.from(expectedSignature)
+      );
+    } catch (error) {
+      childLogger.warn({ error }, 'Failed to validate HMAC signature');
+      return false;
+    }
+  }
+  
+  return false;
+}
+
+/**
  * Validate Freshdesk webhook authentication
+ * Supports multiple authentication methods with HMAC being the most secure
  */
 function validateFreshdeskAuth(req: Request): boolean {
-  // Option 1: Basic auth header with API key
+  // Option 1 (RECOMMENDED): HMAC signature verification
+  if (validateFreshdeskSignature(req)) {
+    return true;
+  }
+
+  // Option 2: Basic auth header with API key
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Basic ')) {
     const credentials = Buffer.from(authHeader.slice(6), 'base64').toString();
     const [apiKey] = credentials.split(':');
 
     if (apiKey === env.FRESHDESK_API_KEY) {
+      childLogger.debug('Authenticated via Basic auth - consider using HMAC signature');
       return true;
     }
   }
 
-  // Option 2: X-Freshdesk-Webhook-Token header
+  // Option 3: X-Freshdesk-Webhook-Token header
   const webhookToken = req.headers['x-freshdesk-webhook-token'];
   if (webhookToken === env.FRESHDESK_API_KEY) {
+    childLogger.debug('Authenticated via header token - consider using HMAC signature');
     return true;
   }
 
-  // Option 3: Query parameter token (for simple webhook setup)
-  if (req.query.token === env.FRESHDESK_API_KEY) {
-    return true;
-  }
+  // Note: Query parameter authentication removed for security
+  // Using ?token= in URL exposes secrets in logs and browser history
 
   return false;
 }

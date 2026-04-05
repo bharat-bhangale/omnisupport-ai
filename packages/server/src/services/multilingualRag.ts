@@ -39,16 +39,23 @@ interface MultilingualSearchOptions {
   minScore?: number;
 }
 
+const childLogger = logger.child({ service: 'multilingualRag' });
+
 // ============================================================================
 // EMBEDDING HELPER
 // ============================================================================
 
 async function generateEmbedding(text: string): Promise<number[]> {
-  const response = await openai.embeddings.create({
-    model: 'text-embedding-3-small',
-    input: text,
-  });
-  return response.data[0].embedding;
+  try {
+    const response = await openai.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: text,
+    });
+    return response.data[0].embedding;
+  } catch (error) {
+    childLogger.error({ error, textLength: text.length }, 'Failed to generate embedding');
+    throw error;
+  }
 }
 
 // ============================================================================
@@ -189,37 +196,47 @@ export const multilingualRag = {
     content: string,
     metadata: Record<string, unknown> = {}
   ): Promise<void> {
-    const index = pinecone.Index(env.PINECONE_INDEX);
-    const namespace = languageDetector.getLanguageNamespace(companyId, language);
+    try {
+      const index = pinecone.Index(env.PINECONE_INDEX);
+      const namespace = languageDetector.getLanguageNamespace(companyId, language);
 
-    const embedding = await generateEmbedding(content);
+      const embedding = await generateEmbedding(content);
 
-    await index.namespace(namespace).upsert([
-      {
-        id: documentId,
-        values: embedding,
-        metadata: {
-          ...metadata,
-          content,
-          language,
-          companyId,
-          indexedAt: new Date().toISOString(),
+      await index.namespace(namespace).upsert([
+        {
+          id: documentId,
+          values: embedding,
+          metadata: {
+            ...metadata,
+            content,
+            language,
+            companyId,
+            indexedAt: new Date().toISOString(),
+          },
         },
-      },
-    ]);
+      ]);
 
-    logger.info({ documentId, language, namespace }, 'Document indexed in language namespace');
+      childLogger.info({ documentId, language, namespace }, 'Document indexed in language namespace');
+    } catch (error) {
+      childLogger.error({ error, documentId, language, companyId }, 'Failed to index document');
+      throw error;
+    }
   },
 
   /**
    * Delete document from language namespace
    */
   async deleteDocument(companyId: string, language: string, documentId: string): Promise<void> {
-    const index = pinecone.Index(env.PINECONE_INDEX);
-    const namespace = languageDetector.getLanguageNamespace(companyId, language);
+    try {
+      const index = pinecone.Index(env.PINECONE_INDEX);
+      const namespace = languageDetector.getLanguageNamespace(companyId, language);
 
-    await index.namespace(namespace).deleteOne(documentId);
-    logger.info({ documentId, language }, 'Document deleted from language namespace');
+      await index.namespace(namespace).deleteOne(documentId);
+      childLogger.info({ documentId, language }, 'Document deleted from language namespace');
+    } catch (error) {
+      childLogger.error({ error, documentId, language, companyId }, 'Failed to delete document');
+      throw error;
+    }
   },
 
   /**
