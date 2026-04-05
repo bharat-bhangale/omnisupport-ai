@@ -92,20 +92,20 @@ export default function Dashboard() {
   const dateStr = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[#0A1835] p-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="mt-1 text-gray-600">
+            <h1 className="text-3xl font-bold text-[#F9FAFB]">Dashboard</h1>
+            <p className="mt-1 text-[#9CA3AF]">
               {dayName}, {dateStr} • {summary?.activeCalls || 0} live calls •{' '}
               {summary?.openTickets || 0} open tickets
             </p>
           </div>
           <button
             onClick={() => refetchSummary()}
-            className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2 text-[#9CA3AF] bg-[#162240] border border-[#1E3461] rounded-lg hover:bg-[#0F1F3D] hover:text-[#F9FAFB] transition-colors"
           >
             <RefreshCw className="h-4 w-4" />
             Refresh
@@ -150,24 +150,24 @@ export default function Dashboard() {
       {/* ROW 2: Live Activity + Active Calls */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
         {/* Live Activity Feed (60%) */}
-        <div className="lg:col-span-3 bg-white rounded-xl border border-gray-200 p-6">
+        <div className="lg:col-span-3 bg-[#162240] rounded-xl border border-[#1E3461] p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-indigo-600" />
+            <h2 className="text-lg font-semibold text-[#F9FAFB] flex items-center gap-2">
+              <Activity className="h-5 w-5 text-[#3B82F6]" />
               Live Activity
             </h2>
-            <span className="flex items-center gap-1.5 px-2 py-0.5 bg-red-50 rounded-full">
+            <span className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500/20 rounded-full">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
               </span>
-              <span className="text-xs font-medium text-red-600">LIVE</span>
+              <span className="text-xs font-medium text-red-400">LIVE</span>
             </span>
           </div>
 
           <div className="space-y-3">
             {displayActivities.length === 0 ? (
-              <p className="text-gray-500 text-sm py-8 text-center">No recent activity</p>
+              <p className="text-[#6B7280] text-sm py-8 text-center">No recent activity</p>
             ) : (
               displayActivities.map((activity) => (
                 <ActivityRow key={activity.id} activity={activity} />
@@ -177,15 +177,15 @@ export default function Dashboard() {
         </div>
 
         {/* Active Calls (40%) */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-            <Phone className="h-5 w-5 text-blue-600" />
+        <div className="lg:col-span-2 bg-[#162240] rounded-xl border border-[#1E3461] p-6">
+          <h2 className="text-lg font-semibold text-[#F9FAFB] flex items-center gap-2 mb-4">
+            <Phone className="h-5 w-5 text-[#0F766E]" />
             Active Calls
           </h2>
 
           <div className="space-y-3">
             {!activeCallsData?.calls?.length ? (
-              <p className="text-gray-500 text-sm py-8 text-center">No active calls</p>
+              <p className="text-[#6B7280] text-sm py-8 text-center">No active calls</p>
             ) : (
               activeCallsData.calls.map((call) => (
                 <ActiveCallCard key={call.id} call={call} />
@@ -198,15 +198,15 @@ export default function Dashboard() {
       {/* ROW 3: Recent Tickets + Resolution Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Recent Tickets */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="bg-[#162240] rounded-xl border border-[#1E3461] p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Ticket className="h-5 w-5 text-amber-600" />
+            <h2 className="text-lg font-semibold text-[#F9FAFB] flex items-center gap-2">
+              <Ticket className="h-5 w-5 text-[#3B82F6]" />
               Recent Tickets
             </h2>
             <a
               href="/tickets"
-              className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+              className="text-sm text-[#3B82F6] hover:text-[#60A5FA] flex items-center gap-1"
             >
               View all <ChevronRight className="h-4 w-4" />
             </a>
@@ -215,7 +215,7 @@ export default function Dashboard() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+                <tr className="text-left text-xs text-[#6B7280] border-b border-[#1E3461]">
                   <th className="pb-2 font-medium">Priority</th>
                   <th className="pb-2 font-medium">Subject</th>
                   <th className="pb-2 font-medium">Category</th>
@@ -225,16 +225,16 @@ export default function Dashboard() {
               </thead>
               <tbody className="text-sm">
                 {recentTicketsData?.tickets.map((ticket) => (
-                  <tr key={ticket.id} className="border-b border-gray-50">
+                  <tr key={ticket.id} className="border-b border-[#1E3461]/50">
                     <td className="py-3">
                       <PriorityBadge priority={ticket.priority} />
                     </td>
-                    <td className="py-3 text-gray-900">{ticket.subject}</td>
-                    <td className="py-3 text-gray-500">{ticket.category || '-'}</td>
-                    <td className="py-3 text-gray-500">{formatTimeAgo(ticket.createdAt)}</td>
+                    <td className="py-3 text-[#F9FAFB]">{ticket.subject}</td>
+                    <td className="py-3 text-[#9CA3AF]">{ticket.category || '-'}</td>
+                    <td className="py-3 text-[#9CA3AF]">{formatTimeAgo(ticket.createdAt)}</td>
                     <td className="py-3">
                       {ticket.hasDraft && (
-                        <span className="flex items-center gap-1 text-purple-600">
+                        <span className="flex items-center gap-1 text-[#8B5CF6]">
                           <Sparkles className="h-3.5 w-3.5" />
                           <span className="text-xs">Draft</span>
                         </span>
@@ -297,17 +297,17 @@ export default function Dashboard() {
       </div>
 
       {/* ROW 4: System Status Bar */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="bg-[#162240] rounded-xl border border-[#1E3461] p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-gray-700">System Status</h3>
+          <h3 className="text-sm font-medium text-[#9CA3AF]">System Status</h3>
           <div className="flex items-center gap-6">
             {systemStatus?.services &&
               Object.entries(systemStatus.services).map(([name, service]) => (
                 <div key={name} className="flex items-center gap-2">
                   <StatusDot status={service.status} />
-                  <span className="text-sm text-gray-600 capitalize">{name}</span>
+                  <span className="text-sm text-[#9CA3AF] capitalize">{name}</span>
                   {service.lastSync && (
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-[#6B7280]">
                       {formatTimeAgo(service.lastSync)}
                     </span>
                   )}
@@ -323,27 +323,27 @@ export default function Dashboard() {
 // Activity Row Component
 function ActivityRow({ activity }: { activity: ActivityItem }) {
   const typeConfig: Record<string, { color: string; icon: React.ReactNode }> = {
-    call_active: { color: 'bg-blue-500', icon: <Phone className="h-3 w-3" /> },
-    call_completed: { color: 'bg-green-500', icon: <Phone className="h-3 w-3" /> },
-    ticket_update: { color: 'bg-amber-500', icon: <Ticket className="h-3 w-3" /> },
-    ticket_draft_ready: { color: 'bg-purple-500', icon: <Sparkles className="h-3 w-3" /> },
+    call_active: { color: 'bg-[#0F766E]', icon: <Phone className="h-3 w-3" /> },
+    call_completed: { color: 'bg-emerald-500', icon: <Phone className="h-3 w-3" /> },
+    ticket_update: { color: 'bg-[#3B82F6]', icon: <Ticket className="h-3 w-3" /> },
+    ticket_draft_ready: { color: 'bg-[#8B5CF6]', icon: <Sparkles className="h-3 w-3" /> },
     escalation_waiting: { color: 'bg-red-500', icon: <AlertCircle className="h-3 w-3" /> },
-    escalation_accepted: { color: 'bg-teal-500', icon: <CheckCircle2 className="h-3 w-3" /> },
+    escalation_accepted: { color: 'bg-[#0F766E]', icon: <CheckCircle2 className="h-3 w-3" /> },
   };
 
-  const config = typeConfig[activity.type] || { color: 'bg-gray-400', icon: null };
+  const config = typeConfig[activity.type] || { color: 'bg-[#6B7280]', icon: null };
 
   return (
-    <div className="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0">
+    <div className="flex items-start gap-3 py-2 border-b border-[#1E3461]/50 last:border-0">
       <div className={`w-6 h-6 rounded-full ${config.color} flex items-center justify-center text-white`}>
         {config.icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-gray-900 truncate">{activity.description}</p>
+        <p className="text-sm text-[#F9FAFB] truncate">{activity.description}</p>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs text-gray-500">{formatTimeAgo(activity.timestamp)}</span>
+          <span className="text-xs text-[#6B7280]">{formatTimeAgo(activity.timestamp)}</span>
           {activity.category && (
-            <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
+            <span className="text-xs px-1.5 py-0.5 bg-[#0A1835] text-[#9CA3AF] rounded">
               {activity.category}
             </span>
           )}
@@ -363,23 +363,23 @@ function ActiveCallCard({ call }: { call: { id: string; phone: string; intent: s
   };
 
   return (
-    <div className="p-3 bg-gray-50 rounded-lg">
+    <div className="p-3 bg-[#0A1835] rounded-lg border border-[#1E3461]">
       <div className="flex items-center justify-between mb-2">
-        <span className="font-mono text-sm text-gray-900">{call.phone}</span>
-        <span className="flex items-center gap-1 text-sm text-gray-600">
+        <span className="font-mono text-sm text-[#F9FAFB]">{call.phone}</span>
+        <span className="flex items-center gap-1 text-sm text-[#9CA3AF]">
           <Clock className="h-3.5 w-3.5" />
           {formatDuration(call.duration)}
         </span>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded">
+        <span className="text-xs px-2 py-0.5 bg-[#0F766E]/20 text-[#0F766E] rounded border border-[#0F766E]/30">
           {call.intent}
         </span>
         <div className="flex items-center gap-2">
           {/* Confidence bar */}
-          <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+          <div className="w-16 h-1.5 bg-[#1E3461] rounded-full overflow-hidden">
             <div
-              className="h-full bg-green-500 rounded-full"
+              className="h-full bg-emerald-500 rounded-full"
               style={{ width: `${call.confidence * 100}%` }}
             />
           </div>
@@ -393,10 +393,10 @@ function ActiveCallCard({ call }: { call: { id: string; phone: string; intent: s
 // Priority Badge Component
 function PriorityBadge({ priority }: { priority: string }) {
   const config: Record<string, string> = {
-    urgent: 'bg-red-100 text-red-700',
-    high: 'bg-orange-100 text-orange-700',
-    medium: 'bg-yellow-100 text-yellow-700',
-    low: 'bg-gray-100 text-gray-600',
+    urgent: 'bg-red-500/20 text-red-400 border border-red-500/30',
+    high: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+    medium: 'bg-[#3B82F6]/20 text-[#3B82F6] border border-[#3B82F6]/30',
+    low: 'bg-[#6B7280]/20 text-[#9CA3AF] border border-[#6B7280]/30',
   };
 
   return (

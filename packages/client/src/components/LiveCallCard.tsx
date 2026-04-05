@@ -114,25 +114,25 @@ export default function LiveCallCard({ call, onViewTranscript, onEscalate }: Liv
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border-2 p-4 transition-all hover:shadow-md ${
+      className={`bg-[#162240] rounded-xl shadow-sm border-2 p-4 transition-all hover:shadow-md ${
         hasFraudRisk
           ? 'border-red-500 animate-pulse'
           : isAtRisk
-          ? 'border-red-300'
-          : 'border-gray-200'
+          ? 'border-red-400/50'
+          : 'border-[#1E3461]'
       }`}
     >
       {/* Header Row */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-teal-100 rounded-full">
-            <Phone className="h-4 w-4 text-teal-600" />
+          <div className="p-2 bg-[#0F766E]/20 rounded-full">
+            <Phone className="h-4 w-4 text-[#0F766E]" />
           </div>
-          <span className="font-mono text-sm text-gray-700">{call.callerPhone}</span>
+          <span className="font-mono text-sm text-[#F9FAFB]">{call.callerPhone}</span>
           {/* PRO Badge for Proactive Context */}
           {call.hasProactiveContext && (
             <span
-              className="inline-flex items-center px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded cursor-help"
+              className="inline-flex items-center px-1.5 py-0.5 bg-amber-500/20 text-amber-400 text-xs font-semibold rounded cursor-help"
               title="Proactive suggestions active — AI is anticipating follow-ups"
             >
               PRO
@@ -155,7 +155,7 @@ export default function LiveCallCard({ call, onViewTranscript, onEscalate }: Liv
             showName={true}
             isDetecting={isDetectingLanguage}
           />
-          <div className="flex items-center gap-1 text-gray-500">
+          <div className="flex items-center gap-1 text-[#9CA3AF]">
             <Clock className="h-4 w-4" />
             <span className="font-mono text-sm font-medium">{formatDuration(liveDuration)}</span>
           </div>
@@ -164,20 +164,20 @@ export default function LiveCallCard({ call, onViewTranscript, onEscalate }: Liv
 
       {/* Intent Chip */}
       <div className="flex items-center gap-2 mb-3">
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#8B5CF6]/20 text-[#A78BFA] text-xs font-medium rounded-full">
           <Sparkles className="h-3 w-3" />
           {intentLabel}
         </span>
-        <span className="text-xs text-gray-400">{call.turnCount} turns</span>
+        <span className="text-xs text-[#6B7280]">{call.turnCount} turns</span>
       </div>
 
       {/* Confidence Bar */}
       <div className="mb-3">
-        <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+        <div className="flex items-center justify-between text-xs text-[#9CA3AF] mb-1">
           <span>AI Confidence</span>
           <span>{Math.round(call.confidence * 100)}%</span>
         </div>
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-2 bg-[#1E3461] rounded-full overflow-hidden">
           <div
             className={`h-full ${getConfidenceColor(call.confidence)} transition-all duration-300`}
             style={{ width: `${call.confidence * 100}%` }}
@@ -191,20 +191,20 @@ export default function LiveCallCard({ call, onViewTranscript, onEscalate }: Liv
           <div
             className={`w-3 h-3 rounded-full ${sentimentInfo.color} ${sentimentInfo.pulseColor}`}
           />
-          <span className="text-xs text-gray-600">
+          <span className="text-xs text-[#9CA3AF]">
             Sentiment: {Math.round(call.sentimentScore * 100)}%
           </span>
-          <sentimentInfo.TrendIcon className="h-3 w-3 text-gray-400" />
+          <sentimentInfo.TrendIcon className="h-3 w-3 text-[#6B7280]" />
         </div>
         <div className="flex items-center gap-2">
           {hasFraudRisk && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-400 text-xs rounded-full">
               <ShieldAlert className="h-3 w-3" />
               Fraud Risk
             </span>
           )}
           {isAtRisk && !hasFraudRisk && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-400 text-xs rounded-full">
               <AlertTriangle className="h-3 w-3" />
               At Risk
             </span>
@@ -216,14 +216,14 @@ export default function LiveCallCard({ call, onViewTranscript, onEscalate }: Liv
       <div className="flex gap-2">
         <button
           onClick={() => onViewTranscript(call.callId)}
-          className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+          className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 bg-[#1E3461] text-[#9CA3AF] text-sm font-medium rounded-lg hover:bg-[#0F1F3D] transition-colors"
         >
           <ExternalLink className="h-4 w-4" />
           View Transcript
         </button>
         <button
           onClick={() => onEscalate(call.callId)}
-          className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-amber-100 text-amber-700 text-sm font-medium rounded-lg hover:bg-amber-200 transition-colors"
+          className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-amber-500/20 text-amber-400 text-sm font-medium rounded-lg hover:bg-amber-500/30 transition-colors"
         >
           <AlertTriangle className="h-4 w-4" />
           Escalate

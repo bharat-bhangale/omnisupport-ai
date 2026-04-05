@@ -56,7 +56,7 @@ function TypeIcon({ type }: { type: KBDocumentType }): React.ReactElement {
     case 'url':
       return <Globe className="w-4 h-4 text-blue-500" />;
     default:
-      return <FileText className="w-4 h-4 text-gray-500" />;
+      return <FileText className="w-4 h-4 text-[#9CA3AF]" />;
   }
 }
 
@@ -65,16 +65,16 @@ function ConfidenceBadge({ confidence }: { confidence: number }): React.ReactEle
   let bg: string, text: string, label: string;
   
   if (confidence >= 0.8) {
-    bg = 'bg-green-100';
-    text = 'text-green-700';
+    bg = 'bg-green-900/30';
+    text = 'text-green-400';
     label = 'High Confidence';
   } else if (confidence >= 0.5) {
-    bg = 'bg-amber-100';
-    text = 'text-amber-700';
+    bg = 'bg-amber-900/30';
+    text = 'text-amber-400';
     label = 'Medium Confidence';
   } else {
-    bg = 'bg-red-100';
-    text = 'text-red-700';
+    bg = 'bg-red-900/30';
+    text = 'text-red-400';
     label = 'Low Confidence';
   }
   
@@ -99,22 +99,22 @@ function DeleteModal({
 }): React.ReactElement {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+      <div className="bg-[#162240] rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-red-100 rounded-full">
-            <AlertCircle className="w-5 h-5 text-red-600" />
+          <div className="p-2 bg-red-900/30 rounded-full">
+            <AlertCircle className="w-5 h-5 text-red-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">Delete Document</h3>
+          <h3 className="text-lg font-semibold text-[#F9FAFB]">Delete Document</h3>
         </div>
-        <p className="text-gray-600 mb-6">
-          Are you sure you want to delete <span className="font-medium">"{document.title}"</span>?
+        <p className="text-[#9CA3AF] mb-6">
+          Are you sure you want to delete <span className="font-medium text-[#F9FAFB]">"{document.title}"</span>?
           This action cannot be undone and all indexed chunks will be removed.
         </p>
         <div className="flex justify-end gap-3">
           <button
             onClick={onCancel}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-[#F9FAFB] bg-[#1E3461] rounded-lg hover:bg-[#0F1F3D] disabled:opacity-50"
           >
             Cancel
           </button>
@@ -299,11 +299,11 @@ export function KnowledgeBase(): React.ReactElement {
   }, [gapsData]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0A1835]">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <h1 className="text-2xl font-semibold text-gray-900">Knowledge Base</h1>
-        <p className="text-sm text-gray-500 mt-1">
+      <div className="bg-[#162240] border-b border-[#1E3461] px-6 py-4">
+        <h1 className="text-2xl font-semibold text-[#F9FAFB]">Knowledge Base</h1>
+        <p className="text-sm text-[#9CA3AF] mt-1">
           Manage documents and URLs that power AI responses
         </p>
       </div>
@@ -313,18 +313,18 @@ export function KnowledgeBase(): React.ReactElement {
         {/* LEFT - Document Library (65%) */}
         <div className="w-[65%] space-y-6">
           {/* Header with actions */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <h2 className="text-lg font-semibold text-gray-900">Document Library</h2>
-                <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                <h2 className="text-lg font-semibold text-[#F9FAFB]">Document Library</h2>
+                <span className="px-2 py-0.5 text-xs font-medium bg-[#0F1F3D] text-[#9CA3AF] rounded-full">
                   {documentsData?.total ?? 0} documents
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowUrlInput(!showUrlInput)}
-                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#F9FAFB] bg-[#162240] border border-[#1E3461] rounded-lg hover:bg-[#0F1F3D]"
                 >
                   <Link2 className="w-4 h-4" />
                   Add URL
@@ -342,10 +342,10 @@ export function KnowledgeBase(): React.ReactElement {
 
             {/* URL Input Section */}
             {showUrlInput && (
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="mb-4 p-4 bg-[#0F1F3D] rounded-lg border border-[#1E3461]">
                 <div className="flex flex-col gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[#F9FAFB] mb-1">
                       URL
                     </label>
                     <input
@@ -353,11 +353,11 @@ export function KnowledgeBase(): React.ReactElement {
                       value={urlInput}
                       onChange={(e) => setUrlInput(e.target.value)}
                       placeholder="https://example.com/docs"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] placeholder-[#6B7280] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[#F9FAFB] mb-1">
                       Title (optional)
                     </label>
                     <input
@@ -365,7 +365,7 @@ export function KnowledgeBase(): React.ReactElement {
                       value={urlTitle}
                       onChange={(e) => setUrlTitle(e.target.value)}
                       placeholder="Document title"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] placeholder-[#6B7280] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
                     />
                   </div>
                   <div className="flex justify-end gap-2">
@@ -375,7 +375,7 @@ export function KnowledgeBase(): React.ReactElement {
                         setUrlInput('');
                         setUrlTitle('');
                       }}
-                      className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                      className="px-3 py-2 text-sm font-medium text-[#9CA3AF] hover:text-[#F9FAFB]"
                     >
                       Cancel
                     </button>
@@ -397,24 +397,24 @@ export function KnowledgeBase(): React.ReactElement {
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                 isDragActive
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-300 hover:border-gray-400'
+                  ? 'border-blue-500 bg-blue-900/20'
+                  : 'border-[#1E3461] hover:border-[#3B82F6]'
               } ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <input {...getInputProps()} />
-              <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragActive ? 'text-blue-500' : 'text-gray-400'}`} />
+              <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragActive ? 'text-blue-400' : 'text-[#6B7280]'}`} />
               {isDragActive ? (
-                <p className="text-blue-600 font-medium">Drop the file here...</p>
+                <p className="text-blue-400 font-medium">Drop the file here...</p>
               ) : (
                 <>
-                  <p className="text-gray-600">
+                  <p className="text-[#9CA3AF]">
                     Drag & drop a PDF here, or click to select
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">PDF only, max 10MB</p>
+                  <p className="text-xs text-[#6B7280] mt-1">PDF only, max 10MB</p>
                 </>
               )}
               {isUploading && (
-                <div className="flex items-center justify-center gap-2 mt-2 text-blue-600">
+                <div className="flex items-center justify-center gap-2 mt-2 text-blue-400">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Uploading...</span>
                 </div>
@@ -423,48 +423,48 @@ export function KnowledgeBase(): React.ReactElement {
           </div>
 
           {/* Document Table */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] overflow-hidden">
             {isLoadingDocs ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
               </div>
             ) : documents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                <FileText className="w-12 h-12 mb-3 text-gray-300" />
+              <div className="flex flex-col items-center justify-center py-12 text-[#9CA3AF]">
+                <FileText className="w-12 h-12 mb-3 text-[#1E3461]" />
                 <p className="font-medium">No documents yet</p>
                 <p className="text-sm">Upload a PDF or add a URL to get started</p>
               </div>
             ) : (
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-[#0F1F3D] border-b border-[#1E3461]">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
                       Title
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
                       Chunks
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
                       Last Indexed
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-[#1E3461]">
                   {documents.map((doc) => (
-                    <tr key={doc._id} className="hover:bg-gray-50">
+                    <tr key={doc._id} className="hover:bg-[#0F1F3D]">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <TypeIcon type={doc.type} />
-                          <span className="font-medium text-gray-900 truncate max-w-[200px]">
+                          <span className="font-medium text-[#F9FAFB] truncate max-w-[200px]">
                             {doc.title}
                           </span>
                           {doc.sourceUrl && (
@@ -472,14 +472,14 @@ export function KnowledgeBase(): React.ReactElement {
                               href={doc.sourceUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-gray-400 hover:text-gray-600"
+                              className="text-[#6B7280] hover:text-[#9CA3AF]"
                             >
                               <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 uppercase">
+                      <td className="px-4 py-3 text-sm text-[#9CA3AF] uppercase">
                         {doc.type}
                       </td>
                       <td className="px-4 py-3">
@@ -488,10 +488,10 @@ export function KnowledgeBase(): React.ReactElement {
                           progress={doc.currentProgress}
                         />
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-[#9CA3AF]">
                         {doc.chunks > 0 ? doc.chunks : '—'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500">
+                      <td className="px-4 py-3 text-sm text-[#9CA3AF]">
                         {formatDate(doc.lastIndexed)}
                       </td>
                       <td className="px-4 py-3">
@@ -500,14 +500,14 @@ export function KnowledgeBase(): React.ReactElement {
                             onClick={() => {
                               setSearchQuery(`doc:${doc._id}`);
                             }}
-                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                            className="p-1.5 text-[#6B7280] hover:text-blue-400 hover:bg-blue-900/30 rounded"
                             title="Test search"
                           >
                             <Search className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setDeleteDoc(doc)}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                            className="p-1.5 text-[#6B7280] hover:text-red-400 hover:bg-red-900/30 rounded"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -525,9 +525,9 @@ export function KnowledgeBase(): React.ReactElement {
         {/* RIGHT - Search & Gaps (35%) */}
         <div className="w-[35%] space-y-6">
           {/* Test KB Search */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Search className="w-5 h-5 text-gray-500" />
+          <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-4">
+            <h3 className="text-lg font-semibold text-[#F9FAFB] mb-4 flex items-center gap-2">
+              <Search className="w-5 h-5 text-[#9CA3AF]" />
               Test KB Search
             </h3>
             <div className="space-y-4">
@@ -538,7 +538,7 @@ export function KnowledgeBase(): React.ReactElement {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder="Enter a test query..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] placeholder-[#6B7280] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
                 />
                 <button
                   onClick={handleSearch}
@@ -559,20 +559,20 @@ export function KnowledgeBase(): React.ReactElement {
                 <div className="space-y-3">
                   <ConfidenceBadge confidence={searchResult.confidence} />
                   
-                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                  <div className="p-3 bg-[#0F1F3D] rounded-lg border border-[#1E3461]">
+                    <p className="text-sm text-[#F9FAFB] whitespace-pre-wrap">
                       {searchResult.answer}
                     </p>
                   </div>
 
                   {searchResult.sources.length > 0 && (
                     <div>
-                      <p className="text-xs font-medium text-gray-500 mb-2">Sources</p>
+                      <p className="text-xs font-medium text-[#9CA3AF] mb-2">Sources</p>
                       <div className="flex flex-wrap gap-2">
                         {searchResult.sources.map((source, idx) => (
                           <span
                             key={idx}
-                            className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-full"
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-900/30 text-blue-400 rounded-full"
                             title={source.snippet}
                           >
                             <FileText className="w-3 h-3" />
@@ -585,7 +585,7 @@ export function KnowledgeBase(): React.ReactElement {
 
                   <button
                     onClick={() => setSearchResult(null)}
-                    className="text-xs text-gray-500 hover:text-gray-700"
+                    className="text-xs text-[#9CA3AF] hover:text-[#F9FAFB]"
                   >
                     Clear results
                   </button>
@@ -595,18 +595,18 @@ export function KnowledgeBase(): React.ReactElement {
           </div>
 
           {/* KB Gaps */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-gray-500" />
+          <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-4">
+            <h3 className="text-lg font-semibold text-[#F9FAFB] mb-4 flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-[#9CA3AF]" />
               KB Gaps This Week
             </h3>
 
             {isLoadingGaps ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                <Loader2 className="w-5 h-5 animate-spin text-[#6B7280]" />
               </div>
             ) : gaps.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-[#9CA3AF]">
                 <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-green-400" />
                 <p className="font-medium">No gaps detected</p>
                 <p className="text-sm">All queries are being answered</p>
@@ -616,13 +616,13 @@ export function KnowledgeBase(): React.ReactElement {
                 {gaps.map((gap) => (
                   <div
                     key={gap._id}
-                    className="border border-gray-200 rounded-lg overflow-hidden"
+                    className="border border-[#1E3461] rounded-lg overflow-hidden"
                   >
-                    <div className="flex items-center gap-3 p-3 hover:bg-gray-50">
-                      <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded">
+                    <div className="flex items-center gap-3 p-3 hover:bg-[#0F1F3D]">
+                      <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold bg-amber-900/30 text-amber-400 rounded">
                         {gap.frequency}×
                       </span>
-                      <p className="flex-1 text-sm text-gray-700 truncate">
+                      <p className="flex-1 text-sm text-[#F9FAFB] truncate">
                         {gap.query}
                       </p>
                       <button
@@ -635,7 +635,7 @@ export function KnowledgeBase(): React.ReactElement {
                             setGapAnswer('');
                           }
                         }}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-400 hover:text-blue-300 hover:bg-blue-900/30 rounded"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add Answer
@@ -644,13 +644,13 @@ export function KnowledgeBase(): React.ReactElement {
 
                     {/* Expanded answer form */}
                     {expandedGapId === gap._id && (
-                      <div className="p-3 bg-gray-50 border-t border-gray-200">
+                      <div className="p-3 bg-[#0F1F3D] border-t border-[#1E3461]">
                         <textarea
                           value={gapAnswer}
                           onChange={(e) => setGapAnswer(e.target.value)}
                           placeholder="Enter the answer for this query..."
                           rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                          className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] placeholder-[#6B7280] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] resize-none"
                         />
                         <div className="flex justify-end gap-2 mt-2">
                           <button
@@ -658,7 +658,7 @@ export function KnowledgeBase(): React.ReactElement {
                               setExpandedGapId(null);
                               setGapAnswer('');
                             }}
-                            className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-800"
+                            className="px-3 py-1.5 text-xs font-medium text-[#9CA3AF] hover:text-[#F9FAFB]"
                           >
                             Cancel
                           </button>

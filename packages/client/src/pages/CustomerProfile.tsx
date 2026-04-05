@@ -70,7 +70,7 @@ export function CustomerProfile() {
 
   if (error || !data) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 text-gray-500">
+      <div className="flex flex-col items-center justify-center h-96 text-[#9CA3AF]">
         <AlertCircle className="w-12 h-12 mb-4" />
         <p className="text-lg">Customer not found</p>
         <Link to="/customers" className="mt-4 text-blue-600 hover:text-blue-700">
@@ -81,33 +81,33 @@ export function CustomerProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0A1835]">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-[#162240] border-b border-[#1E3461]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <Link
                 to="/customers"
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                className="p-2 text-[#6B7280] hover:text-[#9CA3AF] rounded-lg hover:bg-[#1E3461]"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
-              <h1 className="text-lg font-semibold text-gray-900">Customer Profile</h1>
+              <h1 className="text-lg font-semibold text-[#F9FAFB]">Customer Profile</h1>
             </div>
 
             {/* Quick Actions */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowNoteModal(true)}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#F9FAFB] bg-[#162240] border border-[#1E3461] rounded-lg hover:bg-[#0F1F3D]"
               >
                 <FileText className="w-4 h-4" />
                 Log Note
               </button>
               <button
                 onClick={() => {}}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#F9FAFB] bg-[#162240] border border-[#1E3461] rounded-lg hover:bg-[#0F1F3D]"
               >
                 <Plus className="w-4 h-4" />
                 Create Ticket
@@ -138,12 +138,12 @@ export function CustomerProfile() {
       {/* Note Modal */}
       {showNoteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-              <h2 className="font-semibold text-gray-900">Add Internal Note</h2>
+          <div className="bg-[#162240] rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1E3461]">
+              <h2 className="font-semibold text-[#F9FAFB]">Add Internal Note</h2>
               <button
                 onClick={() => setShowNoteModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                className="p-1 text-[#6B7280] hover:text-[#9CA3AF] rounded"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -153,13 +153,13 @@ export function CustomerProfile() {
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Enter your note..."
-                className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full h-32 px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] placeholder-[#6B7280] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
               />
             </div>
-            <div className="flex justify-end gap-2 px-4 py-3 bg-gray-50 rounded-b-lg">
+            <div className="flex justify-end gap-2 px-4 py-3 bg-[#0F1F3D] rounded-b-lg">
               <button
                 onClick={() => setShowNoteModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-[#F9FAFB] bg-[#162240] border border-[#1E3461] rounded-lg hover:bg-[#0F1F3D]"
               >
                 Cancel
               </button>
@@ -179,24 +179,24 @@ export function CustomerProfile() {
       {/* Flag At-Risk Modal */}
       {showFlagModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-              <h2 className="font-semibold text-gray-900">Flag Customer At-Risk</h2>
+          <div className="bg-[#162240] rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1E3461]">
+              <h2 className="font-semibold text-[#F9FAFB]">Flag Customer At-Risk</h2>
               <button
                 onClick={() => setShowFlagModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                className="p-1 text-[#6B7280] hover:text-[#9CA3AF] rounded"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#9CA3AF] mb-2">
                 Reason for flagging
               </label>
               <select
                 value={flagReason}
                 onChange={(e) => setFlagReason(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               >
                 <option value="">Select a reason...</option>
                 <option value="multiple_complaints">Multiple complaints</option>
@@ -208,10 +208,10 @@ export function CustomerProfile() {
                 <option value="other">Other</option>
               </select>
             </div>
-            <div className="flex justify-end gap-2 px-4 py-3 bg-gray-50 rounded-b-lg">
+            <div className="flex justify-end gap-2 px-4 py-3 bg-[#0F1F3D] rounded-b-lg">
               <button
                 onClick={() => setShowFlagModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-[#F9FAFB] bg-[#162240] border border-[#1E3461] rounded-lg hover:bg-[#0F1F3D]"
               >
                 Cancel
               </button>

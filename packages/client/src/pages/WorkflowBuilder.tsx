@@ -261,14 +261,14 @@ function WorkflowCard({
   const hiddenCount = workflow.actions.length - 3;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+    <div className="bg-[#162240] rounded-lg border border-[#1E3461] overflow-hidden hover:shadow-md transition-shadow">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900 truncate">{workflow.name}</h3>
+      <div className="px-4 py-3 border-b border-[#1E3461] flex items-center justify-between">
+        <h3 className="font-semibold text-[#F9FAFB] truncate">{workflow.name}</h3>
         <button
           onClick={(e) => { e.stopPropagation(); onToggleActive(); }}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            workflow.isActive ? 'bg-green-500' : 'bg-gray-300'
+            workflow.isActive ? 'bg-green-500' : 'bg-gray-600'
           }`}
         >
           <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -280,8 +280,8 @@ function WorkflowCard({
       <div className="p-4 space-y-3">
         {/* Trigger Pill */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-medium">When:</span>
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-cyan-50 text-cyan-700 border border-cyan-200">
+          <span className="text-xs text-[#9CA3AF] font-medium">When:</span>
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-cyan-900/30 text-cyan-400 border border-cyan-700">
             <Zap className="w-3 h-3 mr-1" />
             {getTriggerLabel(workflow.trigger.event)}
           </span>
@@ -290,15 +290,15 @@ function WorkflowCard({
         {/* Conditions */}
         {conditionsSummary && (
           <div className="flex items-start gap-2">
-            <span className="text-xs text-gray-500 font-medium flex-shrink-0">If:</span>
-            <span className="text-xs text-gray-600">{conditionsSummary}</span>
+            <span className="text-xs text-[#9CA3AF] font-medium flex-shrink-0">If:</span>
+            <span className="text-xs text-[#9CA3AF]">{conditionsSummary}</span>
           </div>
         )}
 
         {/* Actions List */}
         <div className="space-y-1">
-          <span className="text-xs text-gray-500 font-medium">Then:</span>
-          <ol className="list-decimal list-inside text-xs text-gray-600 space-y-0.5 ml-1">
+          <span className="text-xs text-[#9CA3AF] font-medium">Then:</span>
+          <ol className="list-decimal list-inside text-xs text-[#9CA3AF] space-y-0.5 ml-1">
             {visibleActions.map((action, i) => {
               const cfg = ACTION_TYPES.find((a) => a.value === action.type);
               return (
@@ -308,22 +308,22 @@ function WorkflowCard({
                 </li>
               );
             })}
-            {hiddenCount > 0 && <li className="text-gray-400">+{hiddenCount} more</li>}
+            {hiddenCount > 0 && <li className="text-[#6B7280]">+{hiddenCount} more</li>}
           </ol>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-        <div className="flex items-center gap-4 text-xs text-gray-500">
+      <div className="px-4 py-2 bg-[#0F1F3D] border-t border-[#1E3461] flex items-center justify-between">
+        <div className="flex items-center gap-4 text-xs text-[#9CA3AF]">
           <span>Triggered {workflow.stats.triggeredCount}×</span>
-          <span>Last: {formatTimeAgo(workflow.stats.lastTriggeredAt)}</span>
+          <span>Last: {formatTimeAgo(workflow.stats.lastTriggeredAt)}</span></span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded" title="Edit">
+          <button onClick={onEdit} className="p-1.5 text-[#6B7280] hover:text-cyan-400 hover:bg-cyan-900/30 rounded" title="Edit">
             <Edit2 className="w-4 h-4" />
           </button>
-          <button onClick={onDelete} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete">
+          <button onClick={onDelete} className="p-1.5 text-[#6B7280] hover:text-red-400 hover:bg-red-900/30 rounded" title="Delete">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
@@ -362,10 +362,10 @@ function MyWorkflowsTab({
 
   if (workflows.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-        <Zap className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900">No workflows yet</h3>
-        <p className="text-gray-500 mt-1 mb-6">Start from a template below ↓</p>
+      <div className="bg-[#162240] rounded-lg border border-[#1E3461] p-8 text-center">
+        <Zap className="w-12 h-12 text-[#6B7280] mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-[#F9FAFB]">No workflows yet</h3>
+        <p className="text-[#9CA3AF] mt-1 mb-6">Start from a template below ↓</p>
         <button
           onClick={onNewWorkflow}
           className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white font-medium rounded-lg hover:bg-cyan-700"
@@ -382,7 +382,7 @@ function MyWorkflowsTab({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-gray-900">My Workflows</h2>
+          <h2 className="text-lg font-semibold text-[#F9FAFB]">My Workflows</h2>
           {activeCount > 0 && (
             <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
               {activeCount} active
@@ -432,9 +432,9 @@ function TemplatesTab({
 
   if (templates.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-        <LayoutGrid className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900">No templates available</h3>
+      <div className="bg-[#162240] rounded-lg border border-[#1E3461] p-8 text-center">
+        <LayoutGrid className="w-12 h-12 text-[#6B7280] mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-[#F9FAFB]">No templates available</h3>
       </div>
     );
   }
@@ -444,32 +444,32 @@ function TemplatesTab({
       {categories.map((category) => (
         <div key={category}>
           <div className="flex items-center gap-2 mb-4">
-            <span className={`p-1.5 rounded-lg ${TEMPLATE_CATEGORIES[category]?.color || 'bg-gray-100 text-gray-600'}`}>
+            <span className={`p-1.5 rounded-lg ${TEMPLATE_CATEGORIES[category]?.color || 'bg-[#1E3461] text-[#9CA3AF]'}`}>
               {TEMPLATE_CATEGORIES[category]?.icon || <Zap className="w-5 h-5" />}
             </span>
-            <h3 className="text-lg font-semibold text-gray-900 capitalize">
+            <h3 className="text-lg font-semibold text-[#F9FAFB] capitalize">
               {TEMPLATE_CATEGORIES[category]?.label || category}
             </h3>
-            <span className="text-sm text-gray-500">({byCategory[category].length})</span>
+            <span className="text-sm text-[#9CA3AF]">({byCategory[category].length})</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {byCategory[category].map((template) => (
-              <div key={template.id} className="bg-white rounded-lg border border-gray-200 p-4 hover:border-cyan-400 hover:shadow-md transition-all">
+              <div key={template.id} className="bg-[#162240] rounded-lg border border-[#1E3461] p-4 hover:border-cyan-500 hover:shadow-md transition-all">
                 <div className="flex items-start gap-3 mb-3">
-                  <div className="p-2 bg-gray-100 rounded-lg">
-                    {TEMPLATE_ICONS[template.id] || <Zap className="w-6 h-6 text-cyan-500" />}
+                  <div className="p-2 bg-[#0F1F3D] rounded-lg">
+                    {TEMPLATE_ICONS[template.id] || <Zap className="w-6 h-6 text-cyan-400" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900">{template.name}</h4>
-                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">{template.description}</p>
+                    <h4 className="font-medium text-[#F9FAFB]">{template.name}</h4>
+                    <p className="text-sm text-[#9CA3AF] mt-1 line-clamp-2">{template.description}</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1 mb-3">
-                  <span className="px-2 py-0.5 bg-cyan-50 text-cyan-700 text-xs rounded-full">
+                  <span className="px-2 py-0.5 bg-cyan-900/30 text-cyan-400 text-xs rounded-full">
                     {getTriggerLabel(template.trigger)}
                   </span>
                   {template.actions.slice(0, 2).map((a, i) => (
-                    <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                    <span key={i} className="px-2 py-0.5 bg-[#0F1F3D] text-[#9CA3AF] text-xs rounded-full">
                       {ACTION_TYPES.find((at) => at.value === a.type)?.label || a.type}
                     </span>
                   ))}
@@ -508,13 +508,13 @@ function ExecutionHistoryTab({ workflows }: { workflows: Workflow[] }): React.Re
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center gap-4">
+      <div className="bg-[#162240] rounded-lg border border-[#1E3461] p-4 flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-400" />
+          <Filter className="w-4 h-4 text-[#6B7280]" />
           <select
             value={selectedWorkflowId}
             onChange={(e) => setSelectedWorkflowId(e.target.value)}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+            className="px-3 py-1.5 border border-[#1E3461] bg-[#0A1835] text-[#F9FAFB] rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
           >
             {workflows.map((w) => (
               <option key={w._id} value={w._id}>{w.name}</option>
@@ -522,11 +522,11 @@ function ExecutionHistoryTab({ workflows }: { workflows: Workflow[] }): React.Re
           </select>
         </div>
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-gray-400" />
+          <Calendar className="w-4 h-4 text-[#6B7280]" />
           <select
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+            className="px-3 py-1.5 border border-[#1E3461] bg-[#0A1835] text-[#F9FAFB] rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
           >
             <option value={7}>7 days</option>
             <option value={14}>14 days</option>
@@ -541,35 +541,35 @@ function ExecutionHistoryTab({ workflows }: { workflows: Workflow[] }): React.Re
           <Loader2 className="w-6 h-6 text-cyan-500 animate-spin" />
         </div>
       ) : executions.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">No executions yet</h3>
+        <div className="bg-[#162240] rounded-lg border border-[#1E3461] p-8 text-center">
+          <History className="w-12 h-12 text-[#6B7280] mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-[#F9FAFB]">No executions yet</h3>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-[#162240] rounded-lg border border-[#1E3461] overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Workflow</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Triggered By</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Duration</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+              <tr className="bg-[#0F1F3D] border-b border-[#1E3461]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase">Timestamp</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase">Workflow</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase">Triggered By</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-[#9CA3AF] uppercase">Actions</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-[#9CA3AF] uppercase">Duration</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-[#9CA3AF] uppercase">Status</th>
                 <th className="px-4 py-3 w-8"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[#1E3461]">
               {executions.map((exec) => (
                 <React.Fragment key={exec._id}>
-                  <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => setExpandedRow(expandedRow === exec._id ? null : exec._id)}>
-                    <td className="px-4 py-3 text-sm text-gray-700">{formatDateShort(exec.createdAt)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 font-medium">{historyData?.workflowName}</td>
+                  <tr className="hover:bg-[#0F1F3D] cursor-pointer" onClick={() => setExpandedRow(expandedRow === exec._id ? null : exec._id)}>
+                    <td className="px-4 py-3 text-sm text-[#F9FAFB]">{formatDateShort(exec.createdAt)}</td>
+                    <td className="px-4 py-3 text-sm text-[#F9FAFB] font-medium">{historyData?.workflowName}</td>
                     <td className="px-4 py-3 text-sm">
-                      <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{exec.triggerId?.slice(0, 8) || 'N/A'}</span>
+                      <span className="font-mono text-xs bg-[#0F1F3D] px-1.5 py-0.5 rounded text-[#9CA3AF]">{exec.triggerId?.slice(0, 8) || 'N/A'}</span>
                     </td>
-                    <td className="px-4 py-3 text-center text-sm text-gray-700">{exec.actionsExecuted.length}</td>
-                    <td className="px-4 py-3 text-center text-sm text-gray-500">{formatDuration(exec.durationMs)}</td>
+                    <td className="px-4 py-3 text-center text-sm text-[#F9FAFB]">{exec.actionsExecuted.length}</td>
+                    <td className="px-4 py-3 text-center text-sm text-[#9CA3AF]">{formatDuration(exec.durationMs)}</td>
                     <td className="px-4 py-3 text-center">
                       {exec.success ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
@@ -586,30 +586,30 @@ function ExecutionHistoryTab({ workflows }: { workflows: Workflow[] }): React.Re
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {expandedRow === exec._id ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                      {expandedRow === exec._id ? <ChevronDown className="w-4 h-4 text-[#6B7280]" /> : <ChevronRight className="w-4 h-4 text-[#6B7280]" />}
                     </td>
                   </tr>
                   {expandedRow === exec._id && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-4 bg-gray-50">
+                      <td colSpan={7} className="px-4 py-4 bg-[#0F1F3D]">
                         <div className="grid grid-cols-2 gap-6">
                           <div>
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">Context Data</h4>
-                            <div className="bg-white rounded border border-gray-200 p-3 max-h-48 overflow-auto">
-                              <pre className="text-xs text-gray-600 whitespace-pre-wrap">{JSON.stringify(exec.context, null, 2)}</pre>
+                            <h4 className="text-sm font-medium text-[#F9FAFB] mb-2">Context Data</h4>
+                            <div className="bg-[#0A1835] rounded border border-[#1E3461] p-3 max-h-48 overflow-auto">
+                              <pre className="text-xs text-[#9CA3AF] whitespace-pre-wrap">{JSON.stringify(exec.context, null, 2)}</pre>
                             </div>
                           </div>
                           <div>
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">Actions Executed</h4>
+                            <h4 className="text-sm font-medium text-[#F9FAFB] mb-2">Actions Executed</h4>
                             <div className="space-y-2">
                               {exec.actionsExecuted.map((action, i) => (
-                                <div key={i} className="flex items-center gap-2 bg-white rounded border border-gray-200 px-3 py-2">
+                                <div key={i} className="flex items-center gap-2 bg-[#0A1835] rounded border border-[#1E3461] px-3 py-2">
                                   <CheckCircle className="w-4 h-4 text-green-500" />
-                                  <span className="text-sm text-gray-700">{ACTION_TYPES.find((a) => a.value === action)?.label || action}</span>
+                                  <span className="text-sm text-[#F9FAFB]">{ACTION_TYPES.find((a) => a.value === action)?.label || action}</span>
                                 </div>
                               ))}
                               {exec.errorMessage && (
-                                <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">{exec.errorMessage}</div>
+                                <div className="bg-red-900/30 border border-red-700 rounded p-3 text-sm text-red-400">{exec.errorMessage}</div>
                               )}
                             </div>
                           </div>
@@ -707,15 +707,15 @@ function WorkflowBuilderForm({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="flex flex-col h-full bg-[#162240] rounded-lg border border-[#1E3461] overflow-hidden">
       {/* Breadcrumb Header */}
-      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+      <div className="px-6 py-4 border-b border-[#1E3461] flex items-center justify-between bg-[#0F1F3D]">
         <div className="flex items-center gap-2 text-sm">
-          <button onClick={onCancel} className="text-gray-500 hover:text-cyan-600">Workflows</button>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-          <span className="font-medium text-gray-900">{workflow ? workflow.name : 'New Workflow'}</span>
+          <button onClick={onCancel} className="text-[#9CA3AF] hover:text-cyan-400">Workflows</button>
+          <ChevronRight className="w-4 h-4 text-[#6B7280]" />
+          <span className="font-medium text-[#F9FAFB]">{workflow ? workflow.name : 'New Workflow'}</span>
         </div>
-        <button onClick={onCancel} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded">
+        <button onClick={onCancel} className="p-1.5 text-[#6B7280] hover:text-[#9CA3AF] hover:bg-[#1E3461] rounded">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -729,26 +729,26 @@ function WorkflowBuilderForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Workflow Name *"
-            className="w-full text-2xl font-semibold text-gray-900 border-0 border-b-2 border-transparent focus:border-cyan-500 focus:outline-none pb-2 bg-transparent"
+            className="w-full text-2xl font-semibold text-[#F9FAFB] border-0 border-b-2 border-transparent focus:border-cyan-500 focus:outline-none pb-2 bg-transparent placeholder-[#6B7280]"
           />
           <input
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Add a description..."
-            className="w-full text-gray-600 border-0 focus:outline-none bg-transparent"
+            className="w-full text-[#9CA3AF] border-0 focus:outline-none bg-transparent placeholder-[#6B7280]"
           />
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">Condition Logic:</span>
+            <span className="text-sm text-[#9CA3AF]">Condition Logic:</span>
             <button
               onClick={() => setConditionLogic('AND')}
-              className={`px-3 py-1 text-sm rounded-full ${conditionLogic === 'AND' ? 'bg-cyan-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              className={`px-3 py-1 text-sm rounded-full ${conditionLogic === 'AND' ? 'bg-cyan-600 text-white' : 'bg-[#1E3461] text-[#9CA3AF] hover:bg-[#2a4070]'}`}
             >
               Match ALL (AND)
             </button>
             <button
               onClick={() => setConditionLogic('OR')}
-              className={`px-3 py-1 text-sm rounded-full ${conditionLogic === 'OR' ? 'bg-cyan-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              className={`px-3 py-1 text-sm rounded-full ${conditionLogic === 'OR' ? 'bg-cyan-600 text-white' : 'bg-[#1E3461] text-[#9CA3AF] hover:bg-[#2a4070]'}`}
             >
               Match ANY (OR)
             </button>
@@ -758,8 +758,8 @@ function WorkflowBuilderForm({
         {/* SECTION 1: TRIGGER */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 text-sm font-bold">1</span>
-            <span className="text-lg font-semibold text-gray-900">When this happens...</span>
+            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-900/30 text-cyan-400 text-sm font-bold">1</span>
+            <span className="text-lg font-semibold text-[#F9FAFB]">When this happens...</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {TRIGGER_EVENTS.map((event) => (
@@ -768,16 +768,16 @@ function WorkflowBuilderForm({
                 onClick={() => setTriggerEvent(event.value)}
                 className={`p-4 rounded-lg border-2 text-left transition-all ${
                   triggerEvent === event.value
-                    ? 'border-cyan-500 bg-cyan-50'
-                    : 'border-gray-200 hover:border-cyan-300 hover:bg-gray-50'
+                    ? 'border-cyan-500 bg-cyan-900/20'
+                    : 'border-[#1E3461] hover:border-cyan-600 hover:bg-[#0F1F3D]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className={triggerEvent === event.value ? 'text-cyan-600' : 'text-gray-400'}>{event.icon}</span>
-                  {triggerEvent === event.value && <Check className="w-5 h-5 text-cyan-600" />}
+                  <span className={triggerEvent === event.value ? 'text-cyan-400' : 'text-[#6B7280]'}>{event.icon}</span>
+                  {triggerEvent === event.value && <Check className="w-5 h-5 text-cyan-400" />}
                 </div>
-                <div className="text-sm font-medium text-gray-900">{event.label}</div>
-                <div className="text-xs text-gray-500 mt-1">{event.description}</div>
+                <div className="text-sm font-medium text-[#F9FAFB]">{event.label}</div>
+                <div className="text-xs text-[#9CA3AF] mt-1">{event.description}</div>
               </button>
             ))}
           </div>
@@ -786,12 +786,12 @@ function WorkflowBuilderForm({
         {/* SECTION 2: CONDITIONS */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 text-sm font-bold">2</span>
-            <span className="text-lg font-semibold text-gray-900">Only if these conditions match...</span>
+            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-900/30 text-cyan-400 text-sm font-bold">2</span>
+            <span className="text-lg font-semibold text-[#F9FAFB]">Only if these conditions match...</span>
           </div>
           
           {conditions.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-4 text-center text-gray-500 text-sm border border-dashed border-gray-300">
+            <div className="bg-[#0F1F3D] rounded-lg p-4 text-center text-[#9CA3AF] text-sm border border-dashed border-[#1E3461]">
               No conditions — This workflow will fire for ALL matching triggers
             </div>
           ) : (
@@ -799,21 +799,21 @@ function WorkflowBuilderForm({
               {conditions.map((condition, index) => (
                 <div key={index} className="flex items-center gap-2">
                   {index > 0 && (
-                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${conditionLogic === 'AND' ? 'bg-cyan-100 text-cyan-700' : 'bg-purple-100 text-purple-700'}`}>
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${conditionLogic === 'AND' ? 'bg-cyan-900/30 text-cyan-400' : 'bg-purple-900/30 text-purple-400'}`}>
                       {conditionLogic}
                     </span>
                   )}
                   <select
                     value={condition.field}
                     onChange={(e) => updateCondition(index, { field: e.target.value })}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+                    className="px-3 py-2 border border-[#1E3461] bg-[#0A1835] text-[#F9FAFB] rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
                   >
                     {CONDITION_FIELDS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
                   </select>
                   <select
                     value={condition.operator}
                     onChange={(e) => updateCondition(index, { operator: e.target.value as ConditionOperator })}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+                    className="px-3 py-2 border border-[#1E3461] bg-[#0A1835] text-[#F9FAFB] rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
                   >
                     {CONDITION_OPERATORS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
@@ -822,41 +822,41 @@ function WorkflowBuilderForm({
                     value={String(condition.value || '')}
                     onChange={(e) => updateCondition(index, { value: e.target.value })}
                     placeholder="Value"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+                    className="flex-1 px-3 py-2 border border-[#1E3461] bg-[#0A1835] text-[#F9FAFB] placeholder-[#6B7280] rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
                   />
-                  <button onClick={() => removeCondition(index)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded">
+                  <button onClick={() => removeCondition(index)} className="p-2 text-[#6B7280] hover:text-red-400 hover:bg-red-900/30 rounded">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               ))}
             </div>
           )}
-          <button onClick={addCondition} className="text-sm text-cyan-600 hover:text-cyan-700 font-medium">+ Add Condition</button>
+          <button onClick={addCondition} className="text-sm text-cyan-400 hover:text-cyan-300 font-medium">+ Add Condition</button>
         </div>
 
         {/* SECTION 3: ACTIONS */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 text-sm font-bold">3</span>
-            <span className="text-lg font-semibold text-gray-900">Then do these actions...</span>
+            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-900/30 text-cyan-400 text-sm font-bold">3</span>
+            <span className="text-lg font-semibold text-[#F9FAFB]">Then do these actions...</span>
           </div>
           
           <div className="space-y-3">
             {actions.map((action, index) => {
               const cfg = ACTION_TYPES.find((a) => a.value === action.type);
               return (
-                <div key={index} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="p-1.5 text-gray-400 cursor-grab">
+                <div key={index} className="flex items-start gap-3 p-4 bg-[#0F1F3D] rounded-lg border border-[#1E3461]">
+                  <div className="p-1.5 text-[#6B7280] cursor-grab">
                     <GripVertical className="w-4 h-4" />
                   </div>
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500 font-medium">#{index + 1}</span>
-                      <span className="text-gray-400">{cfg?.icon}</span>
+                      <span className="text-xs text-[#9CA3AF] font-medium">#{index + 1}</span>
+                      <span className="text-[#6B7280]">{cfg?.icon}</span>
                       <select
                         value={action.type}
                         onChange={(e) => updateActionType(index, e.target.value as WorkflowActionType)}
-                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+                        className="px-3 py-1.5 border border-[#1E3461] bg-[#0A1835] text-[#F9FAFB] rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
                       >
                         {ACTION_TYPES.map((at) => <option key={at.value} value={at.value}>{at.label}</option>)}
                       </select>
@@ -865,12 +865,12 @@ function WorkflowBuilderForm({
                       <div className="grid grid-cols-2 gap-3">
                         {cfg.params.map((param) => (
                           <div key={param.key}>
-                            <label className="block text-xs text-gray-500 mb-1">{param.label}</label>
+                            <label className="block text-xs text-[#9CA3AF] mb-1">{param.label}</label>
                             {param.type === 'select' ? (
                               <select
                                 value={String(action.params[param.key] || '')}
                                 onChange={(e) => updateActionParam(index, param.key, e.target.value)}
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-2 py-1.5 border border-[#1E3461] bg-[#0A1835] text-[#F9FAFB] rounded text-sm focus:ring-2 focus:ring-cyan-500"
                               >
                                 <option value="">Select...</option>
                                 {param.options?.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -881,7 +881,7 @@ function WorkflowBuilderForm({
                                 onChange={(e) => updateActionParam(index, param.key, e.target.value)}
                                 placeholder={param.placeholder}
                                 rows={2}
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-2 py-1.5 border border-[#1E3461] bg-[#0A1835] text-[#F9FAFB] placeholder-[#6B7280] rounded text-sm focus:ring-2 focus:ring-cyan-500"
                               />
                             ) : (
                               <input
@@ -889,7 +889,7 @@ function WorkflowBuilderForm({
                                 value={String(action.params[param.key] || '')}
                                 onChange={(e) => updateActionParam(index, param.key, e.target.value)}
                                 placeholder={param.placeholder}
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-cyan-500"
+                                className="w-full px-2 py-1.5 border border-[#1E3461] bg-[#0A1835] text-[#F9FAFB] placeholder-[#6B7280] rounded text-sm focus:ring-2 focus:ring-cyan-500"
                               />
                             )}
                           </div>
@@ -897,7 +897,7 @@ function WorkflowBuilderForm({
                       </div>
                     )}
                   </div>
-                  <button onClick={() => removeAction(index)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded">
+                  <button onClick={() => removeAction(index)} className="p-1.5 text-[#6B7280] hover:text-red-400 hover:bg-red-900/30 rounded">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -910,7 +910,7 @@ function WorkflowBuilderForm({
             <select
               value=""
               onChange={(e) => { if (e.target.value) addAction(e.target.value as WorkflowActionType); }}
-              className="text-sm text-cyan-600 font-medium bg-transparent border border-cyan-200 rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="text-sm text-cyan-400 font-medium bg-transparent border border-cyan-700 rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500"
             >
               <option value="">+ Add Action</option>
               {ACTION_TYPES.map((at) => <option key={at.value} value={at.value}>{at.label}</option>)}
@@ -920,10 +920,10 @@ function WorkflowBuilderForm({
       </div>
 
       {/* Sticky Bottom Action Bar */}
-      <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between bg-gray-50">
+      <div className="px-6 py-4 border-t border-[#1E3461] flex items-center justify-between bg-[#0F1F3D]">
         <button
           onClick={onTest}
-          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100"
+          className="inline-flex items-center gap-2 px-4 py-2 border border-[#1E3461] text-[#F9FAFB] text-sm font-medium rounded-lg hover:bg-[#1E3461]"
         >
           <FlaskConical className="w-4 h-4" />
           Test Workflow
@@ -932,7 +932,7 @@ function WorkflowBuilderForm({
           <button
             onClick={() => handleSave(false)}
             disabled={isSaving}
-            className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 border border-[#1E3461] text-[#F9FAFB] text-sm font-medium rounded-lg hover:bg-[#1E3461] disabled:opacity-50"
           >
             Save as Draft
           </button>
@@ -982,29 +982,29 @@ function TestWorkflowModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-lg shadow-xl">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Test Workflow</h3>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded">
+      <div className="bg-[#162240] rounded-lg w-full max-w-lg shadow-xl border border-[#1E3461]">
+        <div className="px-6 py-4 border-b border-[#1E3461] flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-[#F9FAFB]">Test Workflow</h3>
+          <button onClick={onClose} className="p-1 text-[#6B7280] hover:text-[#9CA3AF] rounded">
             <X className="w-5 h-5" />
           </button>
         </div>
         <div className="p-6 space-y-4">
-          <p className="text-sm text-gray-600">Test with last 5 tickets to see which would trigger this workflow.</p>
+          <p className="text-sm text-[#9CA3AF]">Test with last 5 tickets to see which would trigger this workflow.</p>
           {results && (
-            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+            <div className="bg-[#0F1F3D] rounded-lg p-4 space-y-2">
               <div className="flex items-center gap-2">
-                <span className="font-medium">Would Trigger:</span>
-                <span className={results.wouldTrigger ? 'text-green-600' : 'text-red-600'}>
+                <span className="font-medium text-[#F9FAFB]">Would Trigger:</span>
+                <span className={results.wouldTrigger ? 'text-green-400' : 'text-red-400'}>
                   {results.wouldTrigger ? 'Yes' : 'No'}
                 </span>
               </div>
               {results.actionsToRun.length > 0 && (
                 <div>
-                  <span className="font-medium">Actions to run:</span>
+                  <span className="font-medium text-[#F9FAFB]">Actions to run:</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {results.actionsToRun.map((a, i) => (
-                      <span key={i} className="px-2 py-0.5 bg-cyan-100 text-cyan-700 text-xs rounded-full">{a}</span>
+                      <span key={i} className="px-2 py-0.5 bg-cyan-900/30 text-cyan-400 text-xs rounded-full">{a}</span>
                     ))}
                   </div>
                 </div>
@@ -1012,8 +1012,8 @@ function TestWorkflowModal({
             </div>
           )}
         </div>
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-gray-700 text-sm font-medium hover:bg-gray-100 rounded-lg">
+        <div className="px-6 py-4 border-t border-[#1E3461] flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-[#F9FAFB] text-sm font-medium hover:bg-[#1E3461] rounded-lg">
             Close
           </button>
           <button
@@ -1118,7 +1118,7 @@ export function WorkflowBuilder(): React.ReactElement {
   // Builder View (full screen)
   if (view === 'builder') {
     return (
-      <div className="min-h-screen bg-gray-100 p-6">
+      <div className="min-h-screen bg-[#0A1835] p-6">
         <div className="max-w-5xl mx-auto h-[calc(100vh-48px)]">
           <WorkflowBuilderForm
             workflow={editingWorkflow}
@@ -1139,22 +1139,22 @@ export function WorkflowBuilder(): React.ReactElement {
 
   // List View with Tabs
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-[#0A1835] p-6">
       <div className="max-w-6xl mx-auto">
         {/* Page Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Workflow Automation</h1>
-          <p className="text-sm text-gray-500 mt-1">Automate actions based on ticket events and conditions</p>
+          <h1 className="text-2xl font-bold text-[#F9FAFB]">Workflow Automation</h1>
+          <p className="text-sm text-[#9CA3AF] mt-1">Automate actions based on ticket events and conditions</p>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 mb-6 border-b border-gray-200">
+        <div className="flex items-center gap-1 mb-6 border-b border-[#1E3461]">
           <button
             onClick={() => setActiveTab('workflows')}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === 'workflows'
-                ? 'border-cyan-500 text-cyan-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-cyan-500 text-cyan-400'
+                : 'border-transparent text-[#9CA3AF] hover:text-[#F9FAFB]'
             }`}
           >
             <span className="inline-flex items-center gap-2">
@@ -1166,8 +1166,8 @@ export function WorkflowBuilder(): React.ReactElement {
             onClick={() => setActiveTab('templates')}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === 'templates'
-                ? 'border-cyan-500 text-cyan-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-cyan-500 text-cyan-400'
+                : 'border-transparent text-[#9CA3AF] hover:text-[#F9FAFB]'
             }`}
           >
             <span className="inline-flex items-center gap-2">
@@ -1179,8 +1179,8 @@ export function WorkflowBuilder(): React.ReactElement {
             onClick={() => setActiveTab('history')}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === 'history'
-                ? 'border-cyan-500 text-cyan-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-cyan-500 text-cyan-400'
+                : 'border-transparent text-[#9CA3AF] hover:text-[#F9FAFB]'
             }`}
           >
             <span className="inline-flex items-center gap-2">
@@ -1215,10 +1215,10 @@ export function WorkflowBuilder(): React.ReactElement {
           workflows.length > 0 ? (
             <ExecutionHistoryTab workflows={workflows} />
           ) : (
-            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-              <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">No workflows to show history for</h3>
-              <p className="text-gray-500 mt-1">Create a workflow first to see execution history</p>
+            <div className="bg-[#162240] rounded-lg border border-[#1E3461] p-8 text-center">
+              <History className="w-12 h-12 text-[#6B7280] mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-[#F9FAFB]">No workflows to show history for</h3>
+              <p className="text-[#9CA3AF] mt-1">Create a workflow first to see execution history</p>
             </div>
           )
         )}

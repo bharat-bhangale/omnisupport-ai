@@ -81,8 +81,8 @@ function Slider({
   return (
     <div className="space-y-2">
       <div className="flex justify-between text-sm">
-        <span className="font-medium text-gray-700">{label}</span>
-        <span className="text-gray-500">{formatValue ? formatValue(value) : value}</span>
+        <span className="font-medium text-[#F9FAFB]">{label}</span>
+        <span className="text-[#9CA3AF]">{formatValue ? formatValue(value) : value}</span>
       </div>
       <input
         type="range"
@@ -91,7 +91,7 @@ function Slider({
         step={step}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+        className="w-full h-2 bg-[#1E3461] rounded-lg appearance-none cursor-pointer accent-blue-600"
       />
     </div>
   );
@@ -116,8 +116,8 @@ function VoiceCard({
       onClick={onSelect}
       className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${
         isSelected
-          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-          : 'border-gray-200 hover:border-gray-300 bg-white'
+          ? 'border-blue-500 bg-blue-900/30 ring-2 ring-blue-200'
+          : 'border-[#1E3461] hover:border-[#3B82F6] bg-[#162240]'
       }`}
     >
       {isSelected && (
@@ -132,14 +132,14 @@ function VoiceCard({
             onPlay();
           }}
           className={`p-2 rounded-full ${
-            isPlaying ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            isPlaying ? 'bg-blue-600 text-white' : 'bg-[#0F1F3D] text-[#9CA3AF] hover:bg-[#1E3461]'
           }`}
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
         </button>
         <div>
-          <p className="font-medium text-gray-900">{voice.name}</p>
-          <p className="text-sm text-gray-500">
+          <p className="font-medium text-[#F9FAFB]">{voice.name}</p>
+          <p className="text-sm text-[#9CA3AF]">
             {voice.gender && `${voice.gender} • `}
             {voice.accent || voice.category}
           </p>
@@ -159,7 +159,7 @@ function PhoneMockup({
 }): React.ReactElement {
   return (
     <div className="bg-gray-900 rounded-[2.5rem] p-3 w-64 mx-auto">
-      <div className="bg-white rounded-[2rem] overflow-hidden">
+      <div className="bg-[#162240] rounded-[2rem] overflow-hidden">
         {/* Notch */}
         <div className="h-6 bg-gray-900 flex items-center justify-center">
           <div className="w-20 h-4 bg-black rounded-full" />
@@ -167,14 +167,14 @@ function PhoneMockup({
         {/* Screen */}
         <div className="p-4 min-h-[300px] flex flex-col">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-blue-100 rounded-full mx-auto mb-2 flex items-center justify-center">
-              <Smartphone className="w-8 h-8 text-blue-600" />
+            <div className="w-16 h-16 bg-blue-900/50 rounded-full mx-auto mb-2 flex items-center justify-center">
+              <Smartphone className="w-8 h-8 text-blue-400" />
             </div>
-            <p className="font-semibold text-gray-900">{agentName}</p>
-            <p className="text-xs text-gray-500">AI Voice Agent</p>
+            <p className="font-semibold text-[#F9FAFB]">{agentName}</p>
+            <p className="text-xs text-[#9CA3AF]">AI Voice Agent</p>
           </div>
           <div className="flex-1 flex flex-col justify-center">
-            <div className="bg-blue-50 rounded-lg p-3 text-sm text-gray-700">
+            <div className="bg-blue-900/30 rounded-lg p-3 text-sm text-[#F9FAFB]">
               "{greeting}"
             </div>
           </div>
@@ -236,7 +236,7 @@ function TagInput({
   };
 
   return (
-    <div className="border border-gray-300 rounded-lg p-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+    <div className="border border-[#1E3461] rounded-lg p-2 focus-within:ring-2 focus-within:ring-[#3B82F6] focus-within:border-[#3B82F6] bg-[#0A1835]">
       <div className="flex flex-wrap gap-2">
         {tags.map((tag, index) => (
           <div
@@ -245,7 +245,7 @@ function TagInput({
             onDragStart={() => handleDragStart(index)}
             onDragOver={(e) => handleDragOver(e, index)}
             onDragEnd={handleDragEnd}
-            className={`inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-sm cursor-move ${
+            className={`inline-flex items-center gap-1 px-2 py-1 bg-blue-900/50 text-blue-300 rounded-md text-sm cursor-move ${
               draggedIndex === index ? 'opacity-50' : ''
             }`}
           >
@@ -253,7 +253,7 @@ function TagInput({
             {tag}
             <button
               onClick={() => removeTag(index)}
-              className="hover:text-blue-900"
+              className="hover:text-blue-100"
             >
               <X className="w-3 h-3" />
             </button>
@@ -265,7 +265,7 @@ function TagInput({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={tags.length === 0 ? 'Add category...' : ''}
-          className="flex-1 min-w-[120px] outline-none text-sm py-1"
+          className="flex-1 min-w-[120px] outline-none text-sm py-1 bg-transparent text-[#F9FAFB] placeholder-[#6B7280]"
         />
       </div>
     </div>
@@ -461,27 +461,27 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
 
   if (isLoadingConfig) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0A1835] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0A1835]">
       {/* Hidden audio element */}
       <audio ref={audioRef} className="hidden" />
       
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <h1 className="text-2xl font-semibold text-gray-900">AI Agent Configuration</h1>
-        <p className="text-sm text-gray-500 mt-1">
+      <div className="bg-[#162240] border-b border-[#1E3461] px-6 py-4">
+        <h1 className="text-2xl font-semibold text-[#F9FAFB]">AI Agent Configuration</h1>
+        <p className="text-sm text-[#9CA3AF] mt-1">
           Configure your AI voice and text agents
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-[#162240] border-b border-[#1E3461]">
         <div className="px-6">
           <nav className="flex gap-1">
             {TABS.map((tab) => (
@@ -491,7 +491,7 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    : 'border-transparent text-[#9CA3AF] hover:text-[#F9FAFB]'
                 }`}
               >
                 {tab.icon}
@@ -510,11 +510,11 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
             {/* Left panel */}
             <div className="flex-1 space-y-6">
               {/* Identity Section */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Agent Identity</h2>
+              <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Agent Identity</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[#9CA3AF] mb-1">
                       Agent Name
                     </label>
                     <input
@@ -527,12 +527,12 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
                         }
                       }}
                       maxLength={30}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
                     />
-                    <p className="text-xs text-gray-400 mt-1">{agentName.length}/30</p>
+                    <p className="text-xs text-[#6B7280] mt-1">{agentName.length}/30</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[#9CA3AF] mb-1">
                       Greeting Message
                     </label>
                     <textarea
@@ -545,19 +545,19 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
                       }}
                       maxLength={200}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                      className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] resize-none"
                     />
-                    <p className="text-xs text-gray-400 mt-1">{greeting.length}/200</p>
+                    <p className="text-xs text-[#6B7280] mt-1">{greeting.length}/200</p>
                   </div>
                 </div>
               </div>
 
               {/* Voice Selection */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Voice Selection</h2>
+              <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Voice Selection</h2>
                 {isLoadingVoices ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                    <Loader2 className="w-6 h-6 animate-spin text-[#9CA3AF]" />
                   </div>
                 ) : (
                   <>
@@ -576,7 +576,7 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
                         />
                       ))}
                     </div>
-                    <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
+                    <button className="flex items-center gap-2 text-sm text-[#9CA3AF] hover:text-[#F9FAFB]">
                       <Upload className="w-4 h-4" />
                       Upload Custom Voice
                       <span className="px-1.5 py-0.5 text-xs bg-amber-100 text-amber-700 rounded flex items-center gap-1">
@@ -589,8 +589,8 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
               </div>
 
               {/* Voice Parameters */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Voice Parameters</h2>
+              <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Voice Parameters</h2>
                 <div className="space-y-6">
                   <Slider
                     label="Stability"
@@ -635,11 +635,11 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
               </div>
 
               {/* Escalation Rules */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Escalation Rules</h2>
+              <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Escalation Rules</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[#9CA3AF] mb-1">
                       Attempts Before Escalation
                     </label>
                     <input
@@ -651,7 +651,7 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
                       }}
                       min={1}
                       max={10}
-                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-24 px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
                     />
                   </div>
                   <Slider
@@ -672,20 +672,20 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
 
             {/* Right panel - Phone Mockup */}
             <div className="w-80 space-y-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-4 text-center">Preview</h3>
+              <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                <h3 className="text-sm font-medium text-[#9CA3AF] mb-4 text-center">Preview</h3>
                 <PhoneMockup greeting={greeting} agentName={agentName} />
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-4">Test Your Agent</h3>
+              <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+                <h3 className="text-sm font-medium text-[#9CA3AF] mb-4">Test Your Agent</h3>
                 <div className="space-y-3">
                   <input
                     type="tel"
                     value={testPhoneNumber}
                     onChange={(e) => setTestPhoneNumber(e.target.value)}
                     placeholder="+1 (555) 123-4567"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] placeholder-[#6B7280] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6]"
                   />
                   <button
                     onClick={handleTestCall}
@@ -709,9 +709,9 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
         {activeTab === 'text' && (
           <div className="max-w-3xl space-y-6">
             {/* Classification Categories */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Classification Categories</h2>
-              <p className="text-sm text-gray-500 mb-4">
+            <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+              <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Classification Categories</h2>
+              <p className="text-sm text-[#9CA3AF] mb-4">
                 Add categories that your AI will use to classify incoming tickets. Drag to reorder.
               </p>
               <TagInput
@@ -724,8 +724,8 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
             </div>
 
             {/* Brand Voice */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Brand Voice</h2>
+            <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+              <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Brand Voice</h2>
               <textarea
                 value={brandVoice}
                 onChange={(e) => {
@@ -734,13 +734,13 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
                 }}
                 rows={4}
                 placeholder="Describe your response style... (e.g., Professional yet friendly, use clear language, be empathetic to customer concerns)"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] placeholder-[#6B7280] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] resize-none"
               />
             </div>
 
             {/* Default Tone */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Default Tone</h2>
+            <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+              <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Default Tone</h2>
               <div className="flex gap-2">
                 {DEFAULT_TONES.map((tone) => (
                   <button
@@ -752,7 +752,7 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                       defaultTone === tone.id
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-[#0F1F3D] text-[#9CA3AF] hover:bg-[#1E3461]'
                     }`}
                   >
                     {tone.label}
@@ -762,9 +762,9 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
             </div>
 
             {/* Confidence Threshold */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Confidence Threshold</h2>
-              <p className="text-sm text-gray-500 mb-4">
+            <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+              <h2 className="text-lg font-semibold text-[#F9FAFB] mb-4">Confidence Threshold</h2>
+              <p className="text-sm text-[#9CA3AF] mb-4">
                 Responses below this confidence level will be flagged for human review.
               </p>
               <Slider
@@ -787,14 +787,14 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
         {activeTab === 'prompt' && (
           <div className="max-w-3xl space-y-6">
             {/* System Prompt Suffix */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">System Prompt Suffix</h2>
+                <h2 className="text-lg font-semibold text-[#F9FAFB]">System Prompt Suffix</h2>
                 <span className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded">
                   Advanced
                 </span>
               </div>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-[#9CA3AF] mb-4">
                 Additional instructions appended to the system prompt. Use this for custom behaviors.
               </p>
               <textarea
@@ -805,25 +805,25 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
                 }}
                 rows={6}
                 placeholder="Add custom instructions for the AI agent..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm"
+                className="w-full px-3 py-2 bg-[#0A1835] border border-[#1E3461] text-[#F9FAFB] placeholder-[#6B7280] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] resize-none font-mono text-sm"
               />
             </div>
 
             {/* Effective Prompt */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
               <button
                 onClick={() => setShowEffectivePrompt(!showEffectivePrompt)}
                 className="flex items-center justify-between w-full"
               >
-                <h2 className="text-lg font-semibold text-gray-900">Current Effective Prompt</h2>
+                <h2 className="text-lg font-semibold text-[#F9FAFB]">Current Effective Prompt</h2>
                 {showEffectivePrompt ? (
-                  <ChevronUp className="w-5 h-5 text-gray-400" />
+                  <ChevronUp className="w-5 h-5 text-[#6B7280]" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                  <ChevronDown className="w-5 h-5 text-[#6B7280]" />
                 )}
               </button>
               {showEffectivePrompt && (
-                <pre className="mt-4 p-4 bg-gray-50 rounded-lg text-sm text-gray-700 whitespace-pre-wrap font-mono overflow-x-auto">
+                <pre className="mt-4 p-4 bg-[#0F1F3D] rounded-lg text-sm text-[#9CA3AF] whitespace-pre-wrap font-mono overflow-x-auto">
                   {effectivePrompt}
                 </pre>
               )}
@@ -836,7 +836,7 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
                 setHasChanges(true);
                 toast.success('Prompt reset to default');
               }}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#F9FAFB] bg-[#162240] border border-[#1E3461] rounded-lg hover:bg-[#0F1F3D]"
             >
               <RotateCcw className="w-4 h-4" />
               Reset to Default
@@ -847,16 +847,16 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
         {/* QA Scoring Tab */}
         {activeTab === 'qa' && (
           <div className="max-w-3xl space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">QA Rubric Dimensions</h2>
-              <p className="text-sm text-gray-500 mb-6">
+            <div className="bg-[#162240] rounded-lg shadow-sm border border-[#1E3461] p-6">
+              <h2 className="text-lg font-semibold text-[#F9FAFB] mb-2">QA Rubric Dimensions</h2>
+              <p className="text-sm text-[#9CA3AF] mb-6">
                 Configure how AI responses are scored. Weights must total 100%.
               </p>
               
               <div className="space-y-6">
                 {qaDimensions.map((dimension, index) => (
-                  <div key={dimension.name} className="p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-medium text-gray-900 mb-4">{dimension.name}</h3>
+                  <div key={dimension.name} className="p-4 bg-[#0F1F3D] rounded-lg">
+                    <h3 className="font-medium text-[#F9FAFB] mb-4">{dimension.name}</h3>
                     <div className="grid grid-cols-2 gap-6">
                       <Slider
                         label="Weight"
@@ -899,7 +899,7 @@ ${systemPromptSuffix ? `## Additional Instructions\n${systemPromptSuffix}` : ''}
       </div>
 
       {/* Fixed Save Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#162240] border-t border-[#1E3461] px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-end gap-4">
           {hasChanges && (
             <span className="text-sm text-amber-600">You have unsaved changes</span>
