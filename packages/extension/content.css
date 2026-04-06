@@ -1,4 +1,7 @@
 /* OmniSupport AI Content Script Styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 #omnisupport-panel-root {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

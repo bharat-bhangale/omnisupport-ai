@@ -38,7 +38,6 @@ export function AIDraftPanel({ ticket, onDraftSent, primaryLanguage = 'en' }: AI
   const [showTranslation, setShowTranslation] = useState(false);
 
   const isNonPrimaryLanguage = ticket.language && ticket.language !== primaryLanguage;
-  const [selectedTone, setSelectedTone] = useState<DraftTone>(ticket.aiDraft?.tone ?? 'professional');
 
   const [regenerateDraft, { isLoading: isRegenerating }] = useRegenerateDraftMutation();
   const [sendResponse, { isLoading: isSending }] = useSendResponseMutation();
